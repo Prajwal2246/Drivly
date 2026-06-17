@@ -1,0 +1,25 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model UserWaitlist {
+  id                  String   @id @default(uuid())
+  name                String
+  phone               String
+  email               String
+  city                String
+  societyName         String
+  role                String   // 'OWNER' | 'RENTER' | 'BOTH'
+  vehicleType         String?  // 'CAR' | 'BIKE' | 'OTHER' (optional)
+  brand               String?  // (optional)
+  model               String?  // (optional)
+  year                Int?     // (optional)
+  expectedRentalPrice Float?   // (optional)
+  createdAt           DateTime @default(now())
+
+  @@map("user_waitlist")
+}

@@ -2,25 +2,122 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #09090b;
+  --muted: #52525b;
+  --border: #e4e4e7;
+  --accent: #0f172a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Smooth scroll behavior & scroll padding offset */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+/* Scroll margin top for sections to account for fixed header layout */
+section, [id] {
+  scroll-margin-top: 80px;
+}
+
+/* Smooth fade-in scroll reveal animation (Baseline support with graceful degradation) */
+@keyframes revealSection {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
+.scroll-reveal {
+  view-timeline-name: --section-reveal;
+  view-timeline-axis: block;
+  animation: revealSection linear both;
+  animation-timeline: --section-reveal;
+  animation-range: entry 5% cover 20%;
+}
+
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle architectural grid line effect (light mode) */
+.grid-lines {
+  background-size: 40px 40px !important;
+  background-image: 
+    linear-gradient(to right, rgba(9, 9, 11, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(9, 9, 11, 0.05) 1px, transparent 1px) !important;
+}
+
+/* Trip route path animation */
+@keyframes routeFlow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+.animate-route-flow {
+  stroke-dasharray: 8, 8;
+  animation: routeFlow 2s linear infinite;
+}
+
+/* Custom transitions and states */
+input, select, textarea {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom scrollbar to keep layout premium */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e4e4e7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d8;
+}
+
+/* Gently floating micro-animations for mockup map card overlays */
+@keyframes floatCard {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float-slow {
+  animation: floatCard 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatCard 6s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+/* Transition utility for CSS grid row height animations */
+.grid-rows-transition {
+  display: grid;
+  transition: grid-template-rows 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease-in-out;
 }

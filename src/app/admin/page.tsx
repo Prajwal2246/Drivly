@@ -1,16 +1,20 @@
 import { prisma } from '@/lib/db';
+import type { UserWaitlist } from '@prisma/client';
 import AdminDashboardClient from '@/components/AdminDashboardClient';
+
+// Define a type for the client‑ready payload (Date → ISO string)
+type SerializedWaitlist = Omit<UserWaitlist, 'createdAt'> & { createdAt: string };
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   try {
-    const registrations = await prisma.userWaitlist.findMany({
+    const registrations = (await prisma.userWaitlist.findMany({
       orderBy: { createdAt: 'desc' },
-    });
+    })) as UserWaitlist[];
 
     // Serialize Date objects to strings so they can be passed to the client component
-    const serializedData = registrations.map((entry) => ({
+    const serializedData: SerializedWaitlist[] = registrations.map((entry) => ({
       ...entry,
       createdAt: entry.createdAt.toISOString(),
     }));

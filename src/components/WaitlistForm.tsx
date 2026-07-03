@@ -6,15 +6,45 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { waitlistSchema, type WaitlistInput } from '@/lib/validations';
 import { 
   User, Mail, Phone, MapPin, Building, Car, 
-  Tag, Calendar, CircleDollarSign, Loader2, CheckCircle2, AlertCircle 
+  Tag, Calendar, CircleDollarSign, Loader2, CheckCircle2, AlertCircle,
+  ShieldCheck, Check
 } from 'lucide-react';
+
+const SOCIETY_CLUSTERS = [
+  { name: "Greenwood Heights Cluster", details: "Phase 1 & 2 • 12 active listings", x: 120, y: 70, id: "greenwood", count: 12, dist: "0.4 km" },
+  { name: "Green Park Cooperative Cluster", details: "Green Park Court • 8 active listings", x: 260, y: 110, id: "greenpark", count: 8, dist: "0.8 km" },
+  { name: "Orchid Petals Cluster", details: "Orchid Enclave • 15 active listings", x: 180, y: 150, id: "orchid", count: 15, dist: "1.2 km" },
+  { name: "Palm Meadows Cluster", details: "Palm Greens • 6 active listings", x: 340, y: 60, id: "palm", count: 6, dist: "1.6 km" }
+];
 
 export default function WaitlistForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [registeredSociety, setRegisteredSociety] = useState('');
-  const [shareUrl, setShareUrl] = useState('');
+  const [showMap, setShowMap] = useState(false);
+  const [activeClusterIndex, setActiveClusterIndex] = useState<number | null>(null);
+  const [preVerifyDl, setPreVerifyDl] = useState(false);
+  const [dlFileName, setDlFileName] = useState<string | null>(null);
+  const [dlUploading, setDlUploading] = useState(false);
+  const [dlUploadProgress, setDlUploadProgress] = useState(0);
+
+  const handleFileMockUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setDlUploading(true);
+      setDlUploadProgress(0);
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setDlUploadProgress(progress);
+        if (progress >= 100) {
+          clearInterval(interval);
+          setDlUploading(false);
+          setDlFileName(file.name);
+        }
+      }, 150);
+    }
+  };
 
   const {
     register,
@@ -70,15 +100,16 @@ export default function WaitlistForm() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      // Capture society name before reset
-      setRegisteredSociety(data.societyName);
-
       const response = await fetch('/api/waitlist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          preVerifyDl,
+          dlFileName
+        }),
       });
 
       const result = await response.json();
@@ -96,13 +127,6 @@ export default function WaitlistForm() {
     }
   };
 
-  useEffect(() => {
-    if (isSuccess && typeof window !== 'undefined') {
-      const shareText = `Hey! I just joined the waitlist for Drivly at ${registeredSociety || 'our society'} so we can share cars and bikes privately with verified neighbors. We need 6 more signups to unlock it for our building! Join here: ${window.location.origin}`;
-      setShareUrl(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`);
-    }
-  }, [isSuccess, registeredSociety]);
-
   if (isSuccess) {
     return (
       <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-white border border-zinc-200 rounded-3xl shadow-xl animate-fade-in max-w-xl mx-auto">
@@ -112,53 +136,18 @@ export default function WaitlistForm() {
         </div>
         
         <h3 className="text-2xl font-black tracking-tight text-zinc-950 mb-2">
-          You're Resident #4!
+          Registration Complete!
         </h3>
         
-        <p className="text-sm text-zinc-600 mb-6 font-medium">
-          At <span className="text-zinc-950 font-bold">{registeredSociety}</span>
+        <p className="text-sm text-zinc-650 mb-8 max-w-sm leading-relaxed font-medium">
+          Thank you for joining. We have successfully registered your interest in Drivly. We will verify your gated community profile and get in touch with you shortly to set up private vehicle sharing.
         </p>
-
-        {/* Progress Box */}
-        <div className="w-full bg-zinc-50 border border-zinc-200/60 rounded-2xl p-5 mb-8 text-left">
-          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-zinc-600 mb-2.5">
-            <span>Society Milestone</span>
-            <span className="text-emerald-700 font-mono">40% Complete</span>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="w-full bg-zinc-200 h-2 rounded-full overflow-hidden mb-3">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-1000 w-[40%]" />
-          </div>
-
-          <div className="flex justify-between items-center text-xs text-zinc-600">
-            <span>4 verified signups</span>
-            <span className="font-semibold text-zinc-700">10 needed to unlock</span>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-zinc-200/60 text-xs text-zinc-600 leading-relaxed font-medium">
-            🚀 We need <strong>6 more verified signups</strong> from your building to unlock private vehicle sharing in your society.
-          </div>
-        </div>
-
-        {/* WhatsApp Share Button */}
-        <a
-          href={shareUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full py-4 bg-[#25D366] hover:bg-[#20ba56] text-white font-bold text-base rounded-xl flex items-center justify-center gap-2.5 transition-all duration-200 shadow-lg shadow-[#25D366]/10 hover:shadow-[#25D366]/20 cursor-pointer"
-        >
-          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true" role="img">
-            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.45L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.858.002-2.637-1.03-5.115-2.905-6.99C16.559 1.882 14.084 1.85 11.45 1.85c-5.437 0-9.862 4.42-9.866 9.86-.001 1.839.486 3.635 1.412 5.247l-.992 3.621 3.71-.973zm11.233-7.533c-.3-.149-1.771-.875-2.028-.969-.258-.094-.446-.14-.633.14-.188.281-.727.915-.89 1.102-.163.186-.326.21-.626.06-1.045-.521-1.772-1.054-2.476-2.27-.188-.324-.05-.501.1-.65l.448-.522c.15-.176.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.633-1.523-.867-2.085-.228-.547-.479-.472-.633-.479-.15-.008-.325-.008-.5-.008-.175 0-.46.066-.7.327-.24.263-.915.893-.915 2.178 0 1.285.935 2.529 1.065 2.7.13.172 1.842 2.812 4.462 3.94 2.62 1.127 2.62.752 3.1.702.48-.05 1.548-.633 1.77-1.246.22-.613.22-1.139.15-1.246-.07-.107-.25-.175-.55-.325z" />
-          </svg>
-          <span>Invite Gated Neighbors</span>
-        </a>
 
         <button
           onClick={() => setIsSuccess(false)}
-          className="mt-6 text-xs font-semibold text-zinc-650 hover:text-zinc-800 underline transition-colors cursor-pointer"
+          className="w-full sm:w-auto px-8 py-3.5 bg-zinc-950 hover:bg-zinc-900 active:scale-[0.98] text-white font-bold text-sm rounded-xl transition-all duration-200 cursor-pointer shadow-md"
         >
-          Register another vehicle
+          Submit Another Request
         </button>
       </div>
     );
@@ -285,29 +274,155 @@ export default function WaitlistForm() {
             )}
           </div>
 
-          {/* Society Name */}
-          <div className="space-y-2 sm:col-span-2">
+          {/* Society Name and Cluster Map */}
+          <div className="space-y-3 sm:col-span-2">
             <label htmlFor="societyName" className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
               Society / Community Name
             </label>
-            <div className="relative">
-              <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-400" />
-              <input
-                id="societyName"
-                type="text"
-                placeholder="Greenwood Heights, Phase 1"
-                className={`w-full pl-11 pr-4 py-3 bg-zinc-50 border ${
-                  errors.societyName ? 'border-amber-400' : 'border-zinc-200 focus:bg-white'
-                } rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 text-sm transition-all duration-200`}
-                {...register('societyName')}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Input & Autocomplete Suggestions */}
+              <div className="relative space-y-2">
+                <div className="relative">
+                  <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-400" />
+                  <input
+                    id="societyName"
+                    type="text"
+                    placeholder="Greenwood Heights, Phase 1"
+                    className={`w-full pl-11 pr-4 py-3 bg-zinc-50 border ${
+                      errors.societyName ? 'border-amber-400' : 'border-zinc-200 focus:bg-white'
+                    } rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950/20 focus:border-zinc-950 text-sm transition-all duration-200`}
+                    {...register('societyName')}
+                    onFocus={() => setShowMap(true)}
+                  />
+                </div>
+                {errors.societyName && (
+                  <p className="text-xs text-amber-700 flex items-center gap-1 mt-1 font-medium">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{errors.societyName.message}</span>
+                  </p>
+                )}
+
+                {/* Autocomplete Suggestions Dropdown */}
+                {showMap && (
+                  <div className="absolute z-20 w-full bg-white border border-zinc-200/80 rounded-2xl shadow-xl p-2.5 space-y-1 mt-1">
+                    <span className="block text-[8px] font-bold text-zinc-400 uppercase tracking-wider px-2.5 pb-1.5 border-b border-zinc-100 select-none">
+                      Active Neighbors Nearby
+                    </span>
+                    {SOCIETY_CLUSTERS.map((cluster, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setValue('societyName', cluster.name);
+                          setActiveClusterIndex(idx);
+                        }}
+                        className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex justify-between items-center transition-all duration-250 cursor-pointer ${
+                          activeClusterIndex === idx
+                            ? 'bg-zinc-950 text-white font-bold'
+                            : 'hover:bg-zinc-50 text-zinc-700 hover:text-zinc-950'
+                        }`}
+                      >
+                        <div className="space-y-0.5">
+                          <span className="block">{cluster.name}</span>
+                          <span className={`text-[9px] font-normal block ${
+                            activeClusterIndex === idx ? 'text-white/60' : 'text-zinc-400'
+                          }`}>{cluster.details}</span>
+                        </div>
+                        <span className={`text-[8.5px] font-bold font-mono px-1.5 py-0.5 rounded ${
+                          activeClusterIndex === idx ? 'bg-white/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'
+                        }`}>
+                          {cluster.count} listings
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Localized Cluster map (SVG) */}
+              <div className="relative bg-zinc-50 border border-zinc-200/60 rounded-2xl p-3 h-44 overflow-hidden flex flex-col justify-between">
+                {/* SVG map visual */}
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 450 180" preserveAspectRatio="none" aria-hidden="true" role="img">
+                  {/* Grid overlay */}
+                  <path d="M 0,45 L 450,45 M 0,90 L 450,90 M 0,135 L 450,135" stroke="rgba(9,9,11,0.015)" strokeWidth="1" />
+                  <path d="M 112,0 L 112,180 M 225,0 L 225,180 M 337,0 L 337,180" stroke="rgba(9,9,11,0.015)" strokeWidth="1" />
+                  
+                  {/* User Pin / Central reference point */}
+                  <circle cx="225" cy="90" r="5" fill="#ef4444" className="animate-pulse" />
+                  <circle cx="225" cy="90" r="10" fill="none" stroke="#ef4444" strokeWidth="1" className="animate-ping" />
+                  
+                  {/* Gated clusters bubbles */}
+                  {SOCIETY_CLUSTERS.map((cluster, idx) => {
+                    const isSelected = activeClusterIndex === idx;
+                    return (
+                      <g 
+                        key={idx} 
+                        className="cursor-pointer group/pin"
+                        onClick={() => {
+                          setValue('societyName', cluster.name);
+                          setActiveClusterIndex(idx);
+                        }}
+                      >
+                        {/* Connecting line to center */}
+                        <line 
+                          x1="225" 
+                          y1="90" 
+                          x2={cluster.x} 
+                          y2={cluster.y} 
+                          stroke={isSelected ? "#10b981" : "rgba(9,9,11,0.15)"} 
+                          strokeWidth={isSelected ? 1.5 : 1}
+                          strokeDasharray="4 4"
+                          className="transition-all duration-300"
+                        />
+                        
+                        {/* Gated cluster node */}
+                        <circle 
+                          cx={cluster.x} 
+                          cy={cluster.y} 
+                          r={isSelected ? 14 : 10} 
+                          fill={isSelected ? "#10b981" : "white"} 
+                          stroke={isSelected ? "#34d399" : "#e4e4e7"} 
+                          strokeWidth="1.5"
+                          className="transition-all duration-300 shadow-sm" 
+                        />
+                        <text 
+                          x={cluster.x} 
+                          y={cluster.y + 3} 
+                          textAnchor="middle" 
+                          fontSize="7.5" 
+                          fontWeight="bold" 
+                          fill={isSelected ? "white" : "#71717a"}
+                          className="transition-colors duration-300 font-mono"
+                        >
+                          {cluster.count}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* Map Labels */}
+                <div className="absolute top-2 left-3 flex items-center gap-1.5 text-[8.5px] font-bold text-zinc-400 uppercase tracking-wider bg-white/95 px-2 py-0.5 rounded border border-zinc-150 select-none">
+                  <MapPin className="w-2.5 h-2.5 text-zinc-450" />
+                  Neighborhood Clusters
+                </div>
+
+                {activeClusterIndex !== null ? (
+                  <div className="absolute bottom-2 left-3 right-3 bg-zinc-950 text-white p-2 rounded-xl text-[8.5px] leading-tight text-left shadow-md flex items-center justify-between select-none">
+                    <span>
+                      <strong>{SOCIETY_CLUSTERS[activeClusterIndex].name}</strong> • {SOCIETY_CLUSTERS[activeClusterIndex].dist} away
+                    </span>
+                    <span className="text-[7.5px] bg-emerald-500 text-white px-1.5 py-0.5 rounded font-black">
+                      ACTIVE
+                    </span>
+                  </div>
+                ) : (
+                  <div className="absolute bottom-2 left-3 right-3 bg-white/95 border border-zinc-200 text-zinc-550 p-2 rounded-xl text-[8.5px] leading-tight text-left shadow-sm select-none">
+                    👈 Select a suggestion or click a pin to auto-fill.
+                  </div>
+                )}
+              </div>
             </div>
-            {errors.societyName && (
-              <p className="text-xs text-amber-700 flex items-center gap-1 mt-1 font-medium">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{errors.societyName.message}</span>
-              </p>
-            )}
           </div>
 
           {/* Role Choice */}
@@ -480,6 +595,98 @@ export default function WaitlistForm() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Trust Pre-verification Block (Optional, reinforcing selling point) */}
+        <div className="border-t border-zinc-200 pt-6 mt-6 space-y-4 text-left">
+          <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-2">
+            <ShieldCheck className="w-4.5 h-4.5 text-emerald-600" />
+            Gated Trust Pre-verification (Optional)
+          </h4>
+          
+          <div className="bg-zinc-50 border border-zinc-200/60 rounded-2xl p-4.5 space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer group select-none">
+              <input
+                type="checkbox"
+                checked={preVerifyDl}
+                onChange={(e) => {
+                  setPreVerifyDl(e.target.checked);
+                  if (!e.target.checked) {
+                    setDlFileName(null);
+                    setDlUploadProgress(0);
+                    setDlUploading(false);
+                  }
+                }}
+                className="mt-1 w-4 h-4 rounded text-zinc-900 border-zinc-300 focus:ring-zinc-900 focus:ring-offset-0 cursor-pointer"
+              />
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-zinc-900 group-hover:text-zinc-950 transition-colors">
+                  Pre-verify my Driving License (DL) for instant booking access on launch
+                </span>
+                <p className="text-[10.5px] text-zinc-500 leading-normal">
+                  Skip the verification queue. Your document is processed securely using end-to-end encrypted resident credentials.
+                </p>
+              </div>
+            </label>
+
+            {/* Simulated file uploader */}
+            {preVerifyDl && (
+              <div className="border-2 border-dashed border-zinc-200 bg-white rounded-xl p-5 text-center flex flex-col items-center justify-center gap-3 transition-all duration-300">
+                {dlUploading ? (
+                  /* Loading Progress UI */
+                  <div className="w-full max-w-xs space-y-3 py-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-zinc-500 uppercase tracking-wide">
+                      <span>Uploading document...</span>
+                      <span className="font-mono text-zinc-800">{dlUploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-300 ease-out" 
+                        style={{ width: `${dlUploadProgress}%` }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-zinc-450 block">Processing gated trust credentials...</span>
+                  </div>
+                ) : dlFileName ? (
+                  /* Success/Uploaded UI */
+                  <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-200/85 px-4 py-3 rounded-xl w-full text-left animate-fade-in">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4" strokeWidth={3} />
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                        DL PRE-VERIFIED & UPLOADED
+                      </span>
+                      <span className="text-[10.5px] text-emerald-700 font-medium block">
+                        {dlFileName} (Processed successfully)
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Standard Drag-and-drop / selector UI */
+                  <label className="cursor-pointer w-full flex flex-col items-center justify-center py-2.5">
+                    <input 
+                      type="file" 
+                      accept="image/*,application/pdf" 
+                      className="sr-only" 
+                      onChange={handleFileMockUpload}
+                    />
+                    <div className="w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-550 flex items-center justify-center shadow-sm mb-2.5">
+                      <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-bold text-zinc-800 hover:text-zinc-950 transition-colors block">
+                      Click to upload front of Driving License
+                    </span>
+                    <span className="text-[9.5px] text-zinc-400 mt-1 block">
+                      PDF, JPEG, or PNG up to 5MB
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

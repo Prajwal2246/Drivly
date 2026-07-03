@@ -19,6 +19,8 @@ model UserWaitlist {
   model               String?  // (optional)
   year                Int?     // (optional)
   expectedRentalPrice Float?   // (optional)
+  preVerifyDl         Boolean  @default(false)
+  dlFileName          String?
   createdAt           DateTime @default(now())
 
   @@map("user_waitlist")

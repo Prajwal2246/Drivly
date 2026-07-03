@@ -14,6 +14,8 @@ export const waitlistSchema = z.object({
   model: z.string().nullable().optional(),
   year: z.coerce.number().nullable().optional(),
   expectedRentalPrice: z.coerce.number().nullable().optional(),
+  preVerifyDl: z.boolean().optional(),
+  dlFileName: z.string().nullable().optional(),
 }).superRefine((data, ctx) => {
   if (data.role === 'OWNER' || data.role === 'BOTH') {
     if (!data.vehicleType) {

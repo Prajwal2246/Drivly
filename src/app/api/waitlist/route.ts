@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
         model: data.role !== 'RENTER' ? data.model : null,
         year: data.role !== 'RENTER' ? data.year : null,
         expectedRentalPrice: data.role !== 'RENTER' ? data.expectedRentalPrice : null,
+        preVerifyDl: data.preVerifyDl ?? false,
+        dlFileName: data.preVerifyDl ? data.dlFileName : null,
       },
     });
 

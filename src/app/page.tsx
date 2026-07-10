@@ -31,10 +31,10 @@ export default function Home() {
         <div className="mt-10 flex flex-col items-center gap-8 w-full">
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
             <a
-              href="#waitlist-form"
+              href="/login"
               className="w-full sm:w-auto px-8 py-4 bg-zinc-950 hover:bg-zinc-900 active:scale-[0.98] text-white font-bold text-base rounded-full transition-all duration-200 shadow-xl shadow-zinc-950/10 flex items-center justify-center gap-2 group cursor-pointer"
             >
-              Join the Waitlist
+              Start Sharing Today
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-white" />
             </a>
             <a
@@ -202,12 +202,12 @@ export default function Home() {
                 </div>
 
                 <a
-                  href="#waitlist-form"
+                  href="/login"
                   className="group/btn w-full border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] text-zinc-800 text-[10px] font-bold py-3.5 px-4 rounded-xl flex items-center justify-between transition-all duration-300 cursor-pointer"
                 >
                   <span>Register Your Vehicle</span>
                   <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center group-hover/btn:translate-x-0.5 transition-transform duration-300">
-                    <ArrowUpRight className="w-3 h-3 text-zinc-600" strokeWidth={2.5} />
+                    <ArrowUpRight className="w-3.5 h-3.5 text-zinc-600" strokeWidth={2.5} />
                   </div>
                 </a>
               </div>
@@ -255,7 +255,7 @@ export default function Home() {
                 </div>
 
                 <a
-                  href="#waitlist-form"
+                  href="/login"
                   className="group/btn w-full border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] text-zinc-800 text-[10px] font-bold py-3.5 px-4 rounded-xl flex items-center justify-between transition-all duration-300 cursor-pointer"
                 >
                   <span>Search Gated Vehicles</span>
@@ -339,8 +339,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Gated Trust / Verification Section & Waitlist Form */}
-      <section id="waitlist-form" className="py-24 px-4 sm:px-6 lg:px-8 scroll-reveal">
+      {/* Gated Trust / Verification Section & Society Selection */}
+      <section id="society-selection" className="py-24 px-4 sm:px-6 lg:px-8 scroll-reveal">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           <div className="lg:col-span-5 space-y-8 text-left">
             <div>

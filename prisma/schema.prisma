@@ -25,3 +25,75 @@ model UserWaitlist {
 
   @@map("user_waitlist")
 }
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String   @unique
+  email       String   @unique
+  city        String
+  societyName String
+  role        String   // 'RENTER' | 'OWNER' | 'BOTH'
+  password    String   // hashed password
+  preVerifyDl Boolean  @default(false)
+  dlFileName  String?
+  createdAt   DateTime @default(now())
+
+  vehicles    Vehicle[]
+  bookings    Booking[] @relation("RenterBookings")
+
+  @@map("users")
+}
+
+model Vehicle {
+  id           String   @id @default(uuid())
+  ownerId      String
+  type         String   // 'CAR' | 'BIKE' | 'OTHER'
+  brand        String
+  model        String
+  year         Int
+  colorHex     String   @default("#000000") // used for dynamic silhouettes
+  pricePerHour Float
+  available    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  bookings     Booking[]
+
+  @@map("vehicles")
+}
+
+model Booking {
+  id           String   @id @default(uuid())
+  renterId     String
+  vehicleId    String
+  startTime    DateTime
+  endTime      DateTime
+  status       String   // 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
+  totalCost    Float
+  odometerStart Int?
+  odometerEnd   Int?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  // paymentStatus: 'PENDING' | 'HELD' | 'PAID' | 'REFUNDED'
+  paymentStatus String  @default("PENDING")
+  depositAmount Float   @default(0.0)
+  refundAmount  Float   @default(0.0)
+
+  // challanStatus: 'NONE' | 'PENDING' | 'PAID' | 'DEDUCTED' | 'DISPUTED'
+  challanPenalty Float  @default(0.0)
+  challanReason  String?
+  challanStatus  String @default("NONE")
+
+  // Mutual review ratings (1-5)
+  ownerRating   Int?    // Rating given by Renter to Vehicle/Owner
+  ownerReview   String? // Review given by Renter to Owner
+  renterRating  Int?    // Rating given by Owner to Renter
+  renterReview  String? // Review given by Owner to Renter
+
+  renter       User     @relation("RenterBookings", fields: [renterId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}

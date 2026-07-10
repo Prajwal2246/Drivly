@@ -52,3 +52,26 @@ export function verifyJwt(token: string | undefined, secret: string): any | null
     return null;
   }
 }
+
+/**
+ * Hashes a password securely using built-in crypto pbkdf2Sync.
+ */
+export function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+  return `${salt}:${hash}`;
+}
+
+/**
+ * Verifies a password against a stored pbkdf2 hash.
+ */
+export function verifyPassword(password: string, hashWithSalt: string): boolean {
+  try {
+    const [salt, hash] = hashWithSalt.split(":");
+    const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+    return hash === verifyHash;
+  } catch (error) {
+    return false;
+  }
+}
+

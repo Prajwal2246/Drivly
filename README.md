@@ -1,8 +1,8 @@
-# 🚗 Drivly — Peer-to-Peer Society Vehicle Sharing MVP
+# 🚗 Drivly — Peer-to-Peer Society Vehicle Sharing Platform
 
-Drivly is a modern, high-converting startup landing page MVP designed to collect waitlist registrations for a community-based vehicle sharing platform. It operates like **Airbnb + Society Verification + Vehicle Sharing** for residential communities.
+Drivly is a modern peer-to-peer vehicle sharing platform designed exclusively for verified residential gated societies. It operates like **Airbnb + Society Verification + Vehicle Sharing** for closed communities.
 
-This repository implements the warm minimalist frontend landing page, waitlist form validation, backend registration API, PostgreSQL database adapter, secure session proxy routing, and an interactive admin dashboard.
+This repository implements the warm minimalist frontend entryway portal, interactive society map selection, secure user session routing, and an admin dashboard.
 
 ---
 
@@ -11,7 +11,6 @@ This repository implements the warm minimalist frontend landing page, waitlist f
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router & React Server Components)
 - **Language**: [TypeScript](https://www.typescript.org/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (using variables and utility bindings)
-- **Form & Validation**: [React Hook Form](https://react-hook-form.com/) & [Zod Validation](https://zod.dev/)
 - **Database & ORM**: PostgreSQL with [Prisma ORM 7](https://www.prisma.io/) (utilizing native pg adapter drivers)
 - **Icons**: [Lucide React](https://lucide.dev/)
 
@@ -49,16 +48,13 @@ ADMIN_PASSWORD="your_secure_admin_password"
 ADMIN_SESSION_SECRET="your_secure_random_jwt_signing_secret_key_here"
 ```
 
-### 2. Push Database Schema
+### 2. Generate Prisma Client
 
-Pushes the model schema definitions to your PostgreSQL instance and generates the local client files:
+Generates the local Prisma client files based on your PostgreSQL schema:
 
 ```bash
-npx prisma db push
+npx prisma generate
 ```
-
-> [!NOTE]
-> If you make modifications to `prisma/schema.prisma` in the future, re-run `npx prisma db push` to synchronize changes and update TypeScript definitions.
 
 ### 3. Start the Application
 
@@ -75,18 +71,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 
 ## 🔎 How to Verify Features
 
-### 1. Waitlist Registration Form & Dynamic Rules
+### 1. Society Selection Entryway
 
-1. Scroll down to the **Join the Waitlist** form or click **Join Waitlist** in the navigation header.
-2. Select your role. Selecting **Owner** or **Both** dynamically unfolds the vehicle specification section (type, model, brand, year, expected income).
-3. **Interactive Society Cluster Selection**: 
-   * Click inside the **Society Name** field to trigger a localized gated society suggestion panel (e.g., Greenwood Heights, Green Park, Orchid Petals, Palm Meadows).
-   * Hovering or clicking society name suggestions highlights pins on the accompanying interactive SVG neighborhood cluster map. Clicking map pins auto-fills the input field.
-4. **Gated Trust Pre-verification**:
-   * Check the "Pre-verify my DL for faster activation" box. 
-   * Drag-and-drop or select an image file in the file uploader. A live simulated progress indicator (0% to 100%) will show progress and confirm successful upload.
-5. Input other details and click **Join the Waitlist**.
-6. Once registered, a success card replaces the form. Submitting with the same email again will trigger an error badge, preventing duplicate entries on the backend.
+1. Scroll down to the **Enter your Society** section or click **Start Sharing Today** in the hero header.
+2. **Interactive Society Cluster Selection**: 
+   * Click inside the **Society / Community Name** field to trigger a localized gated society suggestion panel (e.g., Greenwood Heights, Green Park, Orchid Petals, Palm Meadows).
+   * Hovering or clicking society suggestions highlights pins on the accompanying interactive SVG neighborhood cluster map. Clicking map pins auto-fills the input field.
+3. Click **Enter Community**. This will dynamically trigger a redirect using the Next.js router, pushing you to `/login?society=[SelectedSocietyName]`.
 
 ### 2. Admin Dashboard Access & Cryptographic Security
 
@@ -94,20 +85,24 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 2. Next.js 16 Proxy middleware intercepts the route, cryptographically validates the session cookie signature, checks expiration boundaries, and redirects unauthorized attempts to `/admin/login`.
 3. Input your `ADMIN_PASSWORD`.
 4. On validation, the backend generates and signs a secure **HS256 JSON Web Token (JWT)** containing your admin claims and a 24-hour expiration (`exp`), setting it as an `HttpOnly`, secure cookie named `admin_session`.
-5. On the Secure Waitlist Registrations Panel, you can:
-   * **Search**: Instantly filter entries by name, email, city, or society.
-   * **Role & City Filter**: Sort waitlist signups dynamically.
-   * **Inspect details**: Click the chevron dropdown button on a row to expand owner vehicle specifications and view **Driving License Pre-verification files**.
-   * **Export CSV**: Export waitlist registration tables as a spreadsheet file.
-   * **Logout**: Click the _Logout_ button to clear the HTTP-only JWT cookie.
+5. Inside the Secure Dashboard Panel, you can inspect registered entries, filter signups, and log out securely.
 
 ---
 
 ## 📁 Project Directory Structure
 
 ```
+├── docs/
+│   ├── auth/
+│   │   └── auth.md             # Authentication documentation
+│   ├── marketplace/
+│   │   └── marketplace.md      # Marketplace documentation
+│   ├── bookings/
+│   │   └── bookings.md         # Bookings lifecycle documentation
+│   └── safety/
+│       └── safety.md           # Safety checklist documentation
 ├── prisma/
-│   ├── schema.prisma           # PostgreSQL models including pre-verify columns
+│   ├── schema.prisma           # PostgreSQL models
 ├── src/
 │   ├── app/
 │   │   ├── admin/
@@ -117,20 +112,41 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 │   │   │   ├── admin/
 │   │   │   │   ├── login/      # Authenticate credentials and sign HS256 JWT
 │   │   │   │   └── logout/     # Clear session cookie
-│   │   │   └── waitlist/       # Register waitlist entries (POST)
+│   │   │   ├── auth/
+│   │   │   │   ├── login/      # User login endpoint
+│   │   │   │   ├── logout/     # User logout endpoint
+│   │   │   │   ├── profile/    # User profile update endpoint
+│   │   │   │   └── register/   # User registration endpoint
+│   │   │   ├── bookings/
+│   │   │   │   ├── [id]/       # Update booking status
+│   │   │   │   └── route.ts    # Fetch/create booking requests
+│   │   │   ├── vehicles/       # Fetch/create vehicle listings
+│   │   │   └── waitlist/       # Legacy waitlist api
+│   │   ├── dashboard/
+│   │   │   ├── list-vehicle/   # Listing page with role check
+│   │   │   └── page.tsx        # User dashboard page (RSC)
+│   │   ├── feed/               # Gated society vehicle sharing feed
+│   │   ├── login/              # User login & register pages wrapped in Suspense
+│   │   ├── profile/            # User profile settings page
 │   │   ├── globals.css         # Custom animations, custom scrollbars, & font vars
 │   │   ├── layout.tsx          # Font loads, SEO OpenGraph metadata, & HTML skeleton
-│   │   └── page.tsx            # Landing Page main content sections
+│   │   └── page.tsx            # Landing Page main entryway sections
 │   ├── components/
 │   │   ├── Header.tsx          # Sticky navigation & responsive layout triggers
-│   │   ├── WaitlistForm.tsx    # Hook Form handling frontend validation & pre-verification uploads
+│   │   ├── WaitlistForm.tsx    # Society entryway input with interactive SVG map integration
 │   │   ├── FAQ.tsx             # Interactive FAQ Accordion
 │   │   ├── Footer.tsx          # Branding links & Admin Portal button
-│   │   └── AdminDashboardClient.tsx # Client-side state table with sorting, filters, & CSV exports
+│   │   ├── AdminDashboardClient.tsx # Client-side state table for admin views
+│   │   ├── DashboardClient.tsx # Client-side user dashboard workspace
+│   │   ├── FeedClient.tsx      # Client-side vehicle browser feed
+│   │   ├── ListVehicleClient.tsx # Lister form & borrower blockout views
+│   │   ├── ProfileClient.tsx   # User details edit form
+│   │   ├── EmptyState.tsx      # Minimalist empty state UI
+│   │   └── VehicleCard.tsx     # Premium vector display cards
 │   ├── lib/
 │   │   ├── auth.ts             # Zero-dependency HS256 JWT signing and verification helpers
 │   │   ├── db.ts               # Prisma client singleton instantiation
-│   │   └── validations.ts      # Shared Zod validation schemas
+│   │   └── validations.ts      # Shared validation schemas
 │   └── proxy.ts                # Next.js 16 Proxy middleware routing interceptor
 ├── prisma.config.ts            # Prisma schema custom configuration mappings
 ├── tsconfig.json               # TypeScript configuration parameters
@@ -144,4 +160,3 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 
 - **Cryptographic JWT Session**: Session protection relies on HMAC SHA-256 signatures validated against a server-side environment secret. Forged, tampered, or expired tokens are immediately rejected.
 - **HttpOnly Cookies**: Session cookies are stored as `HttpOnly`, `Secure` (in production), and `SameSite=Lax` to enforce browser security constraints against XSS and CSRF.
-- **API Zod Validation**: Backend endpoints validate incoming payloads before performing database operations to protect database integrity and structure.

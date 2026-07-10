@@ -2,6 +2,7 @@
 
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function Header() {
               />
             </svg>
           </div>
-          <span className="text-lg font-bold text-zinc-950 tracking-tight">
+          <span className="text-lg font-bold text-zinc-955 tracking-tight">
             Driv<span className="text-zinc-700 font-medium">ly</span>
           </span>
         </div>
@@ -70,19 +71,19 @@ export default function Header() {
 
         {/* CTA Button */}
         <div className="hidden md:flex items-center">
-          <button
-            onClick={() => scrollTo('waitlist-form')}
+          <Link
+            href="/login"
             className="group relative inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-zinc-950 hover:bg-zinc-900 active:scale-[0.98] active:translate-y-0 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
           >
-            <span>Join Waitlist</span>
+            <span>Login</span>
             <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200" />
-          </button>
+          </Link>
         </div>
 
         {/* Mobile menu toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-zinc-600 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-950/20 rounded-lg"
+          className="md:hidden p-2 text-zinc-600 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-955/20 rounded-lg"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -105,13 +106,14 @@ export default function Header() {
               {section === 'faq' ? 'FAQ' : section.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </button>
           ))}
-          <button
-            onClick={() => scrollTo('waitlist-form')}
+          <Link
+            href="/login"
+            onClick={() => setMobileMenuOpen(false)}
             className="w-full mt-4 py-3 bg-zinc-950 hover:bg-zinc-900 active:scale-[0.98] text-white text-xs font-bold uppercase tracking-wider rounded-full text-center shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <span>Join Waitlist</span>
+            <span>Login</span>
             <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-          </button>
+          </Link>
         </div>
       </div>
     </header>

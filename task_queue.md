@@ -51,10 +51,10 @@ Use this file to track implementation progress across all development phases. Fe
 - [x] Standardize API HTTP error responses (consistent formats for 400, 401, 403, 404, 409, 422)
 - [x] Swap generic console statements with formal logger utilities
 
-## 🧪 Phase 5: Testing
-- [ ] Write Unit Tests for JWT verification and session helpers
-- [ ] Write Integration Tests for booking validation (overlap and past-date blocks)
-- [ ] Write End-to-End Tests for lister blocking checks and inspection checks
+## 🧪 Phase 5: Testing (Done)
+- [x] Write Unit Tests for JWT verification and session helpers
+- [x] Write Integration Tests for booking validation (overlap and past-date blocks)
+- [x] Write End-to-End Tests for lister blocking checks and inspection checks
 
 ## 📋 Phase 6: Git & PR Strategy
 - [ ] Configure standard PR template checklists (Problem, Solution, Test Verification, Visual Mockups)

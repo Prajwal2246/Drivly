@@ -56,9 +56,9 @@ Use this file to track implementation progress across all development phases. Fe
 - [x] Write Integration Tests for booking validation (overlap and past-date blocks)
 - [x] Write End-to-End Tests for lister blocking checks and inspection checks
 
-## 📋 Phase 6: Git & PR Strategy
-- [ ] Configure standard PR template checklists (Problem, Solution, Test Verification, Visual Mockups)
-- [ ] Enforce branch prefix conventions (`feat/`, `fix/`, `test/`, `docs/`)
+## 📋 Phase 6: Git & PR Strategy (Done)
+- [x] Configure standard PR template checklists (Problem, Solution, Test Verification, Visual Mockups)
+- [x] Enforce branch prefix conventions (`feat/`, `fix/`, `test/`, `docs/`)
 
 ## 📄 Phase 7: Documentation
 - [ ] Create repository documents: `README.md`, `ARCHITECTURE.md`, `SECURITY.md`, `API.md`, `DEPLOYMENT.md`, `DATABASE.md`, `CONTRIBUTING.md`

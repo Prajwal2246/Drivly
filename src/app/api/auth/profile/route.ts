@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyJwt, signJwt } from '@/lib/auth';
 import { z } from 'zod';
+import { Logger } from '@/lib/logger';
+import { apiError } from '@/lib/errors';
 
 const profileUpdateSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -18,17 +20,14 @@ export async function PATCH(req: NextRequest) {
     const userPayload = verifyJwt(session, secret);
 
     if (!userPayload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('UNAUTHORIZED', 'Unauthorized');
     }
 
     const body = await req.json();
     const result = profileUpdateSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.issues[0].message },
-        { status: 400 }
-      );
+      return apiError('VALIDATION_ERROR', result.error.issues[0].message);
     }
 
     const { name, email, city, societyName, role } = result.data;
@@ -42,10 +41,8 @@ export async function PATCH(req: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'Email address is already in use.' },
-        { status: 400 }
-      );
+      Logger.info('user_profile_update_failed_duplicate_email', { userId: userPayload.userId, email });
+      return apiError('CONFLICT', 'Email address is already in use.');
     }
 
     // Update user in DB
@@ -94,9 +91,10 @@ export async function PATCH(req: NextRequest) {
       maxAge: 60 * 60 * 24, // 1 day
     });
 
+    Logger.info('user_profile_updated', { userId: updatedUser.id, role: updatedUser.role });
     return response;
   } catch (error) {
-    console.error('PATCH Profile API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('profile_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }

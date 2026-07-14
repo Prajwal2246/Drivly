@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyJwt } from '@/lib/auth';
+import { Logger } from '@/lib/logger';
+import { apiError } from '@/lib/errors';
 
 export async function PATCH(
   req: NextRequest,
@@ -13,7 +15,7 @@ export async function PATCH(
     const userPayload = verifyJwt(session, secret);
 
     if (!userPayload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('UNAUTHORIZED', 'Unauthorized');
     }
 
     const {
@@ -38,7 +40,7 @@ export async function PATCH(
     });
 
     if (!booking) {
-      return NextResponse.json({ error: 'Booking not found.' }, { status: 404 });
+      return apiError('NOT_FOUND', 'Booking not found.');
     }
 
     const isOwner = booking.vehicle.ownerId === userPayload.userId;
@@ -50,12 +52,12 @@ export async function PATCH(
     if (status) {
       // Security check: Only owner can approve/reject
       if ((status === 'APPROVED' || status === 'REJECTED') && !isOwner) {
-        return NextResponse.json({ error: 'Unauthorized to approve/reject this booking.' }, { status: 403 });
+        return apiError('FORBIDDEN', 'Unauthorized to approve/reject this booking.');
       }
 
       // Security check: Only renter can activate/complete
       if ((status === 'ACTIVE' || status === 'COMPLETED') && !isRenter) {
-        return NextResponse.json({ error: 'Unauthorized to update this booking.' }, { status: 403 });
+        return apiError('FORBIDDEN', 'Unauthorized to update this booking.');
       }
 
       updateData.status = status;
@@ -98,10 +100,10 @@ export async function PATCH(
     // 2. Reviews & Rating validations
     if (ownerRating !== undefined || ownerReview !== undefined) {
       if (!isRenter) {
-        return NextResponse.json({ error: 'Only renter can review the owner.' }, { status: 403 });
+        return apiError('FORBIDDEN', 'Only renter can review the owner.');
       }
       if (booking.status !== 'COMPLETED' && status !== 'COMPLETED') {
-        return NextResponse.json({ error: 'Reviews are only allowed after trip completion.' }, { status: 400 });
+        return apiError('BAD_REQUEST', 'Reviews are only allowed after trip completion.');
       }
       if (ownerRating !== undefined) updateData.ownerRating = parseInt(ownerRating);
       if (ownerReview !== undefined) updateData.ownerReview = ownerReview;
@@ -109,10 +111,10 @@ export async function PATCH(
 
     if (renterRating !== undefined || renterReview !== undefined) {
       if (!isOwner) {
-        return NextResponse.json({ error: 'Only owner can review the renter.' }, { status: 403 });
+        return apiError('FORBIDDEN', 'Only owner can review the renter.');
       }
       if (booking.status !== 'COMPLETED' && status !== 'COMPLETED') {
-        return NextResponse.json({ error: 'Reviews are only allowed after trip completion.' }, { status: 400 });
+        return apiError('BAD_REQUEST', 'Reviews are only allowed after trip completion.');
       }
       if (renterRating !== undefined) updateData.renterRating = parseInt(renterRating);
       if (renterReview !== undefined) updateData.renterReview = renterReview;
@@ -121,7 +123,7 @@ export async function PATCH(
     // 3. Challan log validations (only by vehicle owner)
     if (challanPenalty !== undefined) {
       if (!isOwner) {
-        return NextResponse.json({ error: 'Only vehicle owner can log traffic challans.' }, { status: 403 });
+        return apiError('FORBIDDEN', 'Only vehicle owner can log traffic challans.');
       }
       const penalty = parseFloat(challanPenalty);
       updateData.challanPenalty = penalty;
@@ -145,9 +147,20 @@ export async function PATCH(
       data: updateData,
     });
 
+    Logger.info('booking_status_updated', {
+      bookingId: updatedBooking.id,
+      userId: userPayload.userId,
+      status: updatedBooking.status,
+      paymentStatus: updatedBooking.paymentStatus,
+      challanStatus: updatedBooking.challanStatus,
+      challanPenalty: Number(updatedBooking.challanPenalty),
+      ownerRating: updatedBooking.ownerRating,
+      renterRating: updatedBooking.renterRating
+    });
+
     return NextResponse.json({ success: true, booking: updatedBooking });
   } catch (error) {
-    console.error('PATCH Booking API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('booking_patch_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }

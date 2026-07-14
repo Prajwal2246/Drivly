@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { registerSchema } from '@/lib/validations';
+import { Logger } from '@/lib/logger';
+import { apiError } from '@/lib/errors';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,10 +11,7 @@ export async function POST(req: NextRequest) {
     const result = registerSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.issues[0].message },
-        { status: 400 }
-      );
+      return apiError('VALIDATION_ERROR', result.error.issues[0].message);
     }
 
     const { name, email, phone, city, societyName, role, password, preVerifyDl, dlFileName } = result.data;
@@ -25,10 +24,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email or mobile number already exists.' },
-        { status: 400 }
-      );
+      Logger.info('user_registration_failed_duplicate', { email, phone });
+      return apiError('CONFLICT', 'User with this email or mobile number already exists.');
     }
 
     // Hash password securely
@@ -49,6 +46,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    Logger.info('user_registered', { userId: newUser.id, email: newUser.email, role: newUser.role });
+
     return NextResponse.json({
       success: true,
       message: 'Account created successfully.',
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Registration API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('register_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }

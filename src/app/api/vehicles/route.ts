@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyJwt } from '@/lib/auth';
+import { Logger } from '@/lib/logger';
+import { apiError } from '@/lib/errors';
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,7 +11,7 @@ export async function GET(req: NextRequest) {
     const userPayload = verifyJwt(session, secret);
 
     if (!userPayload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('UNAUTHORIZED', 'Unauthorized');
     }
 
     // Find all vehicles in the user's society
@@ -35,8 +37,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, vehicles });
   } catch (error) {
-    console.error('GET Vehicles API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('get_vehicles_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }
 
@@ -47,13 +49,13 @@ export async function POST(req: NextRequest) {
     const userPayload = verifyJwt(session, secret);
 
     if (!userPayload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('UNAUTHORIZED', 'Unauthorized');
     }
 
     const { type, brand, model, year, colorHex, pricePerHour } = await req.json();
 
     if (!type || !brand || !model || !year || !pricePerHour) {
-      return NextResponse.json({ error: 'Missing required parameters.' }, { status: 400 });
+      return apiError('BAD_REQUEST', 'Missing required parameters.');
     }
 
     const newVehicle = await prisma.vehicle.create({
@@ -68,9 +70,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    Logger.info('vehicle_listed', { vehicleId: newVehicle.id, ownerId: userPayload.userId, brand: newVehicle.brand, model: newVehicle.model });
+
     return NextResponse.json({ success: true, vehicle: newVehicle });
   } catch (error) {
-    console.error('POST Vehicles API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('post_vehicle_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }

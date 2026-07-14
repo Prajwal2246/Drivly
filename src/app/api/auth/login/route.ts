@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyPassword, signJwt } from '@/lib/auth';
 import { loginSchema } from '@/lib/validations';
+import { Logger } from '@/lib/logger';
+import { apiError } from '@/lib/errors';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,10 +11,7 @@ export async function POST(req: NextRequest) {
     const result = loginSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.issues[0].message },
-        { status: 400 }
-      );
+      return apiError('VALIDATION_ERROR', result.error.issues[0].message);
     }
 
     const { phone, password } = result.data;
@@ -23,19 +22,15 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Incorrect mobile number or password.' },
-        { status: 401 }
-      );
+      Logger.info('user_login_failed_unknown_phone', { phone });
+      return apiError('UNAUTHORIZED', 'Incorrect mobile number or password.');
     }
 
     // Verify hashed password
     const isPasswordValid = verifyPassword(password, user.password);
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Incorrect mobile number or password.' },
-        { status: 401 }
-      );
+      Logger.info('user_login_failed_wrong_password', { userId: user.id, phone });
+      return apiError('UNAUTHORIZED', 'Incorrect mobile number or password.');
     }
 
     const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
@@ -71,9 +66,10 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24, // 1 day
     });
 
+    Logger.info('user_login_success', { userId: user.id, phone, role: user.role });
     return response;
   } catch (error) {
-    console.error('Login API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('login_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }

@@ -92,17 +92,21 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 ## 📁 Project Directory Structure
 
 ```
-├── docs/
-│   ├── auth/
-│   │   └── auth.md             # Authentication documentation
-│   ├── marketplace/
-│   │   └── marketplace.md      # Marketplace documentation
-│   ├── bookings/
-│   │   └── bookings.md         # Bookings lifecycle documentation
-│   └── safety/
-│       └── safety.md           # Safety checklist documentation
+├── .github/
+│   └── pull_request_template.md # GitHub PR Template
+├── docs/                       # Gated Society specification guides
+│   ├── architecture.md
+│   ├── database.md
+│   ├── requirements.md
+│   ├── roadmap.md
+│   ├── security.md
+│   └── vision.md
 ├── prisma/
-│   ├── schema.prisma           # PostgreSQL models
+│   ├── schema.prisma           # PostgreSQL DB models configuration
+│   └── seed.ts                 # Local DB sandbox seeding script
+├── scripts/                    # SDE engineering hooks
+│   ├── check-branch-name.sh
+│   └── install-hooks.js
 ├── src/
 │   ├── app/
 │   │   ├── admin/
@@ -126,32 +130,32 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 │   │   │   ├── list-vehicle/   # Listing page with role check
 │   │   │   └── page.tsx        # User dashboard page (RSC)
 │   │   ├── feed/               # Gated society vehicle sharing feed
-│   │   ├── login/              # User login & register pages wrapped in Suspense
+│   │   ├── login/              # User login & register pages
 │   │   ├── profile/            # User profile settings page
-│   │   ├── globals.css         # Custom animations, custom scrollbars, & font vars
-│   │   ├── layout.tsx          # Font loads, SEO OpenGraph metadata, & HTML skeleton
+│   │   ├── globals.css         # Animations & styles
+│   │   ├── layout.tsx          # Font loads & SEO OpenGraph metadata
 │   │   └── page.tsx            # Landing Page main entryway sections
-│   ├── components/
-│   │   ├── Header.tsx          # Sticky navigation & responsive layout triggers
-│   │   ├── WaitlistForm.tsx    # Society entryway input with interactive SVG map integration
-│   │   ├── FAQ.tsx             # Interactive FAQ Accordion
-│   │   ├── Footer.tsx          # Branding links & Admin Portal button
-│   │   ├── AdminDashboardClient.tsx # Client-side state table for admin views
-│   │   ├── DashboardClient.tsx # Client-side user dashboard workspace
-│   │   ├── FeedClient.tsx      # Client-side vehicle browser feed
-│   │   ├── ListVehicleClient.tsx # Lister form & borrower blockout views
-│   │   ├── ProfileClient.tsx   # User details edit form
-│   │   ├── EmptyState.tsx      # Minimalist empty state UI
-│   │   └── VehicleCard.tsx     # Premium vector display cards
+│   ├── components/             # Reusable UI dashboard views
 │   ├── lib/
-│   │   ├── auth.ts             # Zero-dependency HS256 JWT signing and verification helpers
-│   │   ├── db.ts               # Prisma client singleton instantiation
+│   │   ├── auth.ts             # HS256 JWT helpers
+│   │   ├── booking-rules.ts    # Pure scheduling validation algorithms
+│   │   ├── db.ts               # Prisma client singleton
+│   │   ├── errors.ts           # Standard API HTTP errors
+│   │   ├── logger.ts           # Structured JSON event logger
 │   │   └── validations.ts      # Shared validation schemas
 │   └── proxy.ts                # Next.js 16 Proxy middleware routing interceptor
-├── prisma.config.ts            # Prisma schema custom configuration mappings
+├── tests/
+│   └── check.ts                # Zero-framework Node assert test verification runner
+├── ARCHITECTURE.md             # Architecture spec doc
+├── DATABASE.md                 # Database schema description doc
+├── SECURITY.md                 # Security gating and session description doc
+├── API.md                      # API route payloads and standard errors doc
+├── DEPLOYMENT.md               # Local setup and seed configuration doc
+├── CONTRIBUTING.md             # Git branch naming and hook configs doc
+├── task_queue.md               # 22-phase task queue tracker
+├── package.json                # Project script commands & dependency bundles
 ├── tsconfig.json               # TypeScript configuration parameters
-├── postcss.config.mjs          # PostCSS configuration bindings
-└── package.json                # Project script commands & dependency bundles
+└── postcss.config.mjs          # PostCSS configuration bindings
 ```
 
 ---

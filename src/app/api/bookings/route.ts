@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyJwt } from '@/lib/auth';
+import { Logger } from '@/lib/logger';
+import { apiError } from '@/lib/errors';
+import { checkPastDate, checkOwnerBooking } from '@/lib/booking-rules';
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,7 +12,7 @@ export async function GET(req: NextRequest) {
     const userPayload = verifyJwt(session, secret);
 
     if (!userPayload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('UNAUTHORIZED', 'Unauthorized');
     }
 
     // Get bookings where user is the renter
@@ -49,8 +52,8 @@ export async function GET(req: NextRequest) {
       ownerBookings,
     });
   } catch (error) {
-    console.error('GET Bookings API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('get_bookings_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }
 
@@ -61,29 +64,73 @@ export async function POST(req: NextRequest) {
     const userPayload = verifyJwt(session, secret);
 
     if (!userPayload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('UNAUTHORIZED', 'Unauthorized');
     }
 
     const { vehicleId, startTime, endTime, totalCost } = await req.json();
 
     if (!vehicleId || !startTime || !endTime || totalCost === undefined) {
-      return NextResponse.json({ error: 'Missing required parameters.' }, { status: 400 });
+      return apiError('BAD_REQUEST', 'Missing required parameters.');
+    }
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    // 1. Prevent past-date booking requests
+    const dateErr = checkPastDate(start, end);
+    if (dateErr) {
+      return apiError('BAD_REQUEST', dateErr);
+    }
+
+    // Fetch the vehicle to verify existence and ownership
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id: vehicleId }
+    });
+
+    if (!vehicle) {
+      return apiError('NOT_FOUND', 'Vehicle not found.');
+    }
+
+    // 2. Block owners from booking their own listings
+    const ownerErr = checkOwnerBooking(vehicle.ownerId, userPayload.userId);
+    if (ownerErr) {
+      return apiError('BAD_REQUEST', ownerErr);
+    }
+
+    // 3. Block overlapping bookings for the same vehicle
+    const overlap = await prisma.booking.findFirst({
+      where: {
+        vehicleId,
+        status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] },
+        OR: [
+          {
+            startTime: { lte: end },
+            endTime: { gte: start }
+          }
+        ]
+      }
+    });
+
+    if (overlap) {
+      return apiError('CONFLICT', 'This vehicle is already booked during the selected times.');
     }
 
     const newBooking = await prisma.booking.create({
       data: {
         renterId: userPayload.userId,
         vehicleId,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
+        startTime: start,
+        endTime: end,
         status: 'PENDING',
         totalCost: parseFloat(totalCost),
       },
     });
 
+    Logger.info('booking_requested', { bookingId: newBooking.id, renterId: userPayload.userId, vehicleId });
+
     return NextResponse.json({ success: true, booking: newBooking });
   } catch (error) {
-    console.error('POST Booking API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('post_booking_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal Server Error');
   }
 }

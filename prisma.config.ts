@@ -1,10 +1,17 @@
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
+
+const databaseUrl = 
+  process.env.DATABASE_URL || 
+  process.env.POSTGRES_URL_NON_POOLING || 
+  process.env.POSTGRES_PRISMA_URL || 
+  process.env.SUPABASE_DATABASE_URL || 
+  "postgresql://localhost:5432/parkshare";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: env("DATABASE_URL"),
+    url: databaseUrl,
   },
   migrations: {
     seed: "npx tsx prisma/seed.ts",

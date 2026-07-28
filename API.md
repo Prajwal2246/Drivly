@@ -30,6 +30,13 @@ When an API request fails, the response is structured as follows:
 
 ## 🔑 Authentication Endpoints
 
+Some handlers return the nested shape above; a few older paths still return a flat `{ "error": "string" }`. Clients should accept both (the login UI does).
+
+### 0. `POST /api/auth/user-login` (demo — sandbox)
+Passwordless session for demo phones (and may auto-create users). **Do not treat as production auth.** Gate on Preview only; see `SECURITY.md` and `task_queue.md` Track A1.
+* **Payload**: `{ "phone": "5550001111", "society": "Greenwood Heights" }`
+* **Response**: sets `user_session` cookie on success.
+
 ### 1. `POST /api/auth/register`
 Creates a new renter or owner account.
 * **Payload**:

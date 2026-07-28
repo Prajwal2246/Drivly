@@ -4,6 +4,53 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, Phone, User, Building, MapPin, Loader2, AlertCircle, ShieldCheck, Check } from 'lucide-react';
 
+/** Pull message from flat `{ error: string }` or nested `{ error: { message } }` API shapes. */
+function readApiErrorMessage(data: unknown, fallback: string): string {
+  const raw =
+    typeof data === 'object' && data !== null && 'error' in data
+      ? (data as { error: unknown }).error
+      : undefined;
+
+  let message = fallback;
+  if (typeof raw === 'string' && raw.trim()) {
+    message = raw.trim();
+  } else if (
+    raw &&
+    typeof raw === 'object' &&
+    'message' in raw &&
+    typeof (raw as { message: unknown }).message === 'string'
+  ) {
+    message = (raw as { message: string }).message.trim() || fallback;
+  }
+
+  return humanizeAuthError(message);
+}
+
+/** Map infra/Prisma dumps to short user-facing copy; keep real validation messages. */
+function humanizeAuthError(message: string): string {
+  const lower = message.toLowerCase();
+
+  if (lower.includes('ssl') || lower.includes('tls') || lower.includes('certificate')) {
+    return 'We couldn’t securely connect to the server. Please try again in a moment.';
+  }
+  if (lower.includes("can't reach database") || lower.includes('could not connect') || lower.includes('p1001')) {
+    return 'Service temporarily unavailable. Please try again later.';
+  }
+  if (lower.includes('does not exist') || lower.includes('p2021')) {
+    return 'Service isn’t fully set up yet. Please try again later.';
+  }
+  if (
+    lower === 'internal server error' ||
+    lower.includes('prisma.') ||
+    lower.includes('invalid `prisma') ||
+    message.length > 160
+  ) {
+    return 'Something went wrong on our side. Please try again in a moment.';
+  }
+
+  return message;
+}
+
 function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -78,10 +125,21 @@ function LoginForm() {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      let data: unknown = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed.');
+        setError(
+          readApiErrorMessage(
+            data,
+            isLogin ? 'Couldn’t sign you in. Check your mobile number and password.' : 'Couldn’t create your account. Please try again.'
+          )
+        );
+        return;
       }
 
       if (isLogin) {
@@ -93,8 +151,8 @@ function LoginForm() {
         setError(null);
         alert('Account created successfully! Please sign in.');
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+    } catch {
+      setError('Network error. Check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -111,16 +169,23 @@ function LoginForm() {
         body: JSON.stringify({ phone, society: 'Greenwood Heights' }),
       });
 
-      const data = await response.json();
+      let data: unknown = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Demo login failed.');
+        setError(readApiErrorMessage(data, 'Demo sign-in failed. Please try again.'));
+        return;
       }
 
       router.refresh();
       router.push('/feed');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during demo login.');
+    } catch {
+      setError('Network error. Check your connection and try again.');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -164,9 +229,15 @@ function LoginForm() {
           </div>
 
           {error && (
-            <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 text-amber-800 p-4 rounded-xl mb-6 text-sm font-medium">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-              <p>{error}</p>
+            <div
+              role="alert"
+              className="flex items-start gap-3 bg-red-50 border border-red-100 text-red-900 p-4 rounded-xl mb-6 text-sm"
+            >
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" aria-hidden />
+              <div className="min-w-0 text-left">
+                <p className="font-semibold tracking-tight">Couldn’t sign you in</p>
+                <p className="mt-1 font-medium text-red-800/90 leading-relaxed break-words">{error}</p>
+              </div>
             </div>
           )}
 

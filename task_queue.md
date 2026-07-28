@@ -272,7 +272,7 @@ _Use this section as a short diary so future-you remembers decisions._
 
 | Date | Done | Notes / tradeoffs |
 |------|------|-------------------|
-| | | |
+| 2026-07-28 | Prod + Preview DB reachable; docs runbook | Single `DATABASE_URL` pooler on Vercel; remove competing `POSTGRES_*` URLs. `db push` via direct `:5432`. Login UI humanizes infra errors. Track A security items still open. |
 
 ---
 

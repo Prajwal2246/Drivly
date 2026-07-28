@@ -46,11 +46,25 @@ npx prisma generate
 
 ## ☁️ Production Hosting
 
-Drivly is optimized for serverless targets (like Vercel).
+Drivly is deployed on Vercel (team: `prajwa-janbandhus-projects`, project: `drivly`).
 
-### Deploying to Vercel
-1. Set up a PostgreSQL database (e.g. Neon, Supabase, or AWS RDS).
-2. Configure the project environment variables in the Vercel Dashboard (`DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`).
-3. Deploy the project repository:
-   * Next.js App Router and Server Components will build and run on Edge and Serverless functions.
-   * Middleware proxy routes will run on Edge Runtime for optimal redirect performance.
+| Env | URL |
+|-----|-----|
+| Production | https://drivly-mu.vercel.app/ |
+| Preview (`main`) | https://drivly-git-main-prajwa-janbandhus-projects.vercel.app/ |
+| Dashboard | https://vercel.com/prajwa-janbandhus-projects/drivly |
+
+### Environment variables (Vercel Dashboard)
+Configure separately for **Production** vs **Preview** where possible:
+
+* `DATABASE_URL` (and any Supabase/Postgres pooler URLs) — prefer a **different** DB for Preview
+* `ADMIN_PASSWORD`
+* `ADMIN_SESSION_SECRET` (no hardcoded fallback in code for Production)
+* Optional: `DEMO_LOGIN=true` **only** on Preview — leave unset on Production
+
+**Note:** Vercel sets `NODE_ENV=production` on both Production and Preview. Use `VERCEL_ENV` (`production` | `preview` | `development`) or `DEMO_LOGIN` to distinguish environments in code.
+
+### Deploying / redeploying
+1. Push to the Git branch linked in Vercel (confirm Production branch in project Git settings).
+2. Preview deployments are created per branch/commit; Production promotes from the Production branch.
+3. After changing env vars, redeploy so serverless functions pick them up.

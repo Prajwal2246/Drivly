@@ -7,7 +7,7 @@ This document outlines the development phases, active releases, and upcoming mil
 * Switch between Renter, Owner, and Dual membership profile configurations.
 * Display society-isolated vehicle feeds with dynamic SVG silhouettes.
 * Block non-lister profiles (`RENTER`) from uploading vehicles.
-* Automate demo login controls (OTP bypass) and database seeding for developer review.
+* Automate demo login via seeded accounts + real password login (no OTP-bypass endpoint) and database seeding for developer review.
 
 ## Phase 2: Pre-Trip Safety Inspections (Completed)
 * Design lock-out pre-trip verification overlay (`InspectionModal`).

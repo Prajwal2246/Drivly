@@ -37,6 +37,12 @@ Seeds the database with mock accounts, vehicles, and reviews:
 npx prisma db seed
 ```
 
+Creates public sandbox users (same credentials as `/login` demo buttons):
+- Renter: `5550001111` / `demo123`
+- Owner: `5550002222` / `demo123`
+
+Demo buttons call `POST /api/auth/login` with those credentials (not a passwordless route). Re-seed Preview/Production if the buttons return incorrect phone/password.
+
 ### 3. Generate Type Definitions
 ```bash
 npx prisma generate

@@ -87,6 +87,17 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 4. On validation, the backend generates and signs a secure **HS256 JSON Web Token (JWT)** containing your admin claims and a 24-hour expiration (`exp`), setting it as an `HttpOnly`, secure cookie named `admin_session`.
 5. Inside the Secure Dashboard Panel, you can inspect registered entries, filter signups, and log out securely.
 
+### 3. Demo accounts (interview / sandbox)
+
+One-click **Demo as Renter** / **Demo as Owner** on `/login` use the **same** `POST /api/auth/login` path as real users (phone + password). There is no passwordless `/api/auth/user-login` shortcut.
+
+| Role | Phone | Password |
+|------|-------|----------|
+| Demo Renter | `5550001111` | `demo123` |
+| Demo Owner | `5550002222` | `demo123` |
+
+These rows come from `npx prisma db seed`. Production and Preview DBs must be seeded for the buttons to work. Treat them as public sandbox credentials — not private accounts.
+
 ---
 
 ## 📁 Project Directory Structure
@@ -140,6 +151,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 │   │   ├── auth.ts             # HS256 JWT helpers
 │   │   ├── booking-rules.ts    # Pure scheduling validation algorithms
 │   │   ├── db.ts               # Prisma client singleton
+│   │   ├── demo-accounts.ts    # Public sandbox demo login credentials
 │   │   ├── errors.ts           # Standard API HTTP errors
 │   │   ├── logger.ts           # Structured JSON event logger
 │   │   └── validations.ts      # Shared validation schemas

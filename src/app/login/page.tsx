@@ -3,6 +3,17 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, Phone, User, Building, MapPin, Loader2, AlertCircle, ShieldCheck, Check } from 'lucide-react';
+import { demoLoginBody, type DemoAccountKind } from '@/lib/demo-accounts';
+
+function authErrorMessage(data: unknown, fallback: string): string {
+  if (!data || typeof data !== 'object') return fallback;
+  const error = (data as { error?: unknown }).error;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object' && typeof (error as { message?: unknown }).message === 'string') {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+}
 
 function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -81,7 +92,7 @@ function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed.');
+        throw new Error(authErrorMessage(data, 'Authentication failed.'));
       }
 
       if (isLogin) {
@@ -100,21 +111,22 @@ function LoginForm() {
     }
   };
 
-  const handleDemoLogin = async (phone: string) => {
+  // Same /api/auth/login path as real users — seed phones + DEMO_PASSWORD only.
+  const handleDemoLogin = async (kind: DemoAccountKind) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/user-login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, society: 'Greenwood Heights' }),
+        body: JSON.stringify(demoLoginBody(kind)),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Demo login failed.');
+        throw new Error(authErrorMessage(data, 'Demo login failed. Run `npx prisma db seed` if sandbox users are missing.'));
       }
 
       router.refresh();
@@ -312,15 +324,17 @@ function LoginForm() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => handleDemoLogin('5550001111')}
-                  className="py-3 px-4 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] text-zinc-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                  onClick={() => handleDemoLogin('renter')}
+                  disabled={isSubmitting}
+                  className="py-3 px-4 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] text-zinc-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all disabled:opacity-60"
                 >
                   Demo as Renter
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDemoLogin('5550002222')}
-                  className="py-3 px-4 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] text-zinc-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                  onClick={() => handleDemoLogin('owner')}
+                  disabled={isSubmitting}
+                  className="py-3 px-4 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98] text-zinc-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all disabled:opacity-60"
                 >
                   Demo as Owner
                 </button>

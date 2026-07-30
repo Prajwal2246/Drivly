@@ -57,6 +57,7 @@ Authenticates a user and sets a secure `user_session` cookie.
     "password": "secure_password"
   }
   ```
+* **Demo**: `/login` one-click buttons call this same endpoint with seeded sandbox phones (`5550001111` / `5550002222`, password `demo123`). There is no passwordless demo route.
 
 ### 3. `PATCH /api/auth/profile`
 Updates user profile settings and resets the session claims.

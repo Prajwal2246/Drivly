@@ -1,6 +1,9 @@
 import assert from 'node:assert';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { signJwt, verifyJwt } from '../src/lib/auth';
 import { checkPastDate, checkOwnerBooking, checkOverlap } from '../src/lib/booking-rules';
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, demoLoginBody } from '../src/lib/demo-accounts';
 
 async function runTests() {
   console.log('🧪 Starting Drivly Test Verification Suite...');
@@ -43,6 +46,30 @@ async function runTests() {
   const mismatchedDecoded = verifyJwt(validToken, wrongSecret);
   assert.strictEqual(mismatchedDecoded, null, 'JWT verification with incorrect key should verify to null');
   console.log('✅ JWT Signature Key Verification: OK');
+
+  // ==========================================
+  // 1b. DEMO LOGIN (A1): password path only
+  // ==========================================
+  console.log('\n--- Running Unit Tests: Demo Accounts ---');
+
+  const renterBody = demoLoginBody('renter');
+  const ownerBody = demoLoginBody('owner');
+  assert.strictEqual(renterBody.phone, DEMO_ACCOUNTS.renter.phone);
+  assert.strictEqual(ownerBody.phone, DEMO_ACCOUNTS.owner.phone);
+  assert.strictEqual(renterBody.password, DEMO_PASSWORD);
+  assert.strictEqual(ownerBody.password, DEMO_PASSWORD);
+  assert.notStrictEqual(renterBody.phone, ownerBody.phone, 'Demo renter and owner phones must differ');
+  // Demo payloads must look like real login (phone + password), never phone-only.
+  assert.ok('password' in renterBody && 'password' in ownerBody);
+  assert.ok(!('society' in renterBody), 'Demo login must not send society-only passwordless payload');
+
+  const passwordlessRoute = path.join(process.cwd(), 'src/app/api/auth/user-login/route.ts');
+  assert.strictEqual(
+    existsSync(passwordlessRoute),
+    false,
+    'Passwordless /api/auth/user-login must remain deleted'
+  );
+  console.log('✅ Demo login uses password path; passwordless route removed: OK');
 
   // ==========================================
   // 2. INTEGRATION TESTS: BOOKING RULES

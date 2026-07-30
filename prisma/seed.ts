@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { hashPassword } from '../src/lib/auth';
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from '../src/lib/demo-accounts';
 
 const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({ connectionString });
@@ -17,17 +18,17 @@ async function main() {
     await prisma.user.deleteMany();
 
     console.log('Seeding demo sandbox users...');
-    const demoPasswordHash = hashPassword('demo123');
+    const demoPasswordHash = hashPassword(DEMO_PASSWORD);
 
     // Create Demo Renter
     const renter = await prisma.user.create({
       data: {
-        name: 'Demo Renter',
-        phone: '5550001111',
-        email: 'renter@drivly.demo',
+        name: DEMO_ACCOUNTS.renter.name,
+        phone: DEMO_ACCOUNTS.renter.phone,
+        email: DEMO_ACCOUNTS.renter.email,
         city: 'Mumbai',
         societyName: 'Greenwood Heights',
-        role: 'RENTER',
+        role: DEMO_ACCOUNTS.renter.role,
         password: demoPasswordHash,
         preVerifyDl: true,
         dlFileName: 'demo_license.pdf',
@@ -37,12 +38,12 @@ async function main() {
     // Create Demo Owner
     const owner = await prisma.user.create({
       data: {
-        name: 'Demo Owner',
-        phone: '5550002222',
-        email: 'owner@drivly.demo',
+        name: DEMO_ACCOUNTS.owner.name,
+        phone: DEMO_ACCOUNTS.owner.phone,
+        email: DEMO_ACCOUNTS.owner.email,
         city: 'Mumbai',
         societyName: 'Greenwood Heights',
-        role: 'OWNER',
+        role: DEMO_ACCOUNTS.owner.role,
         password: demoPasswordHash,
       },
     });

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, Mail, Phone, User, Building, MapPin, Loader2, AlertCircle, ShieldCheck, Check } from 'lucide-react';
+import { Lock, Mail, Phone, User, Building, MapPin, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,10 +16,6 @@ function LoginForm() {
     password: '',
   });
   
-  const [preVerifyDl, setPreVerifyDl] = useState(false);
-  const [dlFileName, setDlFileName] = useState<string | null>(null);
-  const [dlUploading, setDlUploading] = useState(false);
-  const [dlUploadProgress, setDlUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -39,24 +35,6 @@ function LoginForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileMockUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setDlUploading(true);
-      setDlUploadProgress(0);
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setDlUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          setDlUploading(false);
-          setDlFileName(file.name);
-        }
-      }, 100);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -65,11 +43,7 @@ function LoginForm() {
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
     const payload = isLogin 
       ? { phone: formData.phone, password: formData.password }
-      : { 
-          ...formData, 
-          preVerifyDl, 
-          dlFileName: preVerifyDl ? dlFileName : null 
-        };
+      : formData;
 
     try {
       const response = await fetch(endpoint, {
@@ -230,43 +204,6 @@ function LoginForm() {
                     <option value="OWNER">Owner (List Vehicles)</option>
                     <option value="BOTH">Both</option>
                   </select>
-                </div>
-
-                {/* Driver's License verification */}
-                <div className="border-t border-zinc-100 pt-4 mt-2">
-                  <label className="flex items-start gap-3 cursor-pointer select-none">
-                    <input type="checkbox" checked={preVerifyDl} onChange={(e) => setPreVerifyDl(e.target.checked)} className="mt-1 w-4 h-4 rounded text-zinc-900 border-zinc-300 focus:ring-zinc-900" />
-                    <div>
-                      <span className="text-xs font-bold text-zinc-900">Pre-verify my Driving License (DL)</span>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">Accelerates booking clearance by resident managers.</p>
-                    </div>
-                  </label>
-
-                  {preVerifyDl && (
-                    <div className="mt-3 border border-dashed border-zinc-200 bg-zinc-50/50 rounded-xl p-4 text-center">
-                      {dlUploading ? (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-[10px] font-bold text-zinc-500">
-                            <span>Uploading document...</span>
-                            <span>{dlUploadProgress}%</span>
-                          </div>
-                          <div className="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-emerald-500 h-full rounded-full transition-all duration-300" style={{ width: `${dlUploadProgress}%` }} />
-                          </div>
-                        </div>
-                      ) : dlFileName ? (
-                        <div className="flex items-center gap-2 bg-emerald-50 text-emerald-800 p-2.5 rounded-lg text-xs font-medium border border-emerald-100">
-                          <Check className="w-4 h-4 flex-shrink-0" />
-                          <span>{dlFileName} (Uploaded)</span>
-                        </div>
-                      ) : (
-                        <label className="cursor-pointer block py-2">
-                          <input type="file" accept="image/*,application/pdf" className="sr-only" onChange={handleFileMockUpload} />
-                          <span className="text-xs font-bold text-zinc-700 hover:text-zinc-900">Upload Front of DL</span>
-                        </label>
-                      )}
-                    </div>
-                  )}
                 </div>
               </>
             )}

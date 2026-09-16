@@ -1,5 +1,7 @@
 import assert from 'node:assert';
-import { signJwt, verifyJwt } from '../src/lib/auth';
+import { signJwt, verifyJwt, hashPassword, verifyPassword } from '../src/lib/auth';
+import { rateLimit } from '../src/lib/rate-limit';
+import { validateDlFile } from '../src/lib/validations';
 import { checkPastDate, checkOwnerBooking, checkOverlap } from '../src/lib/booking-rules';
 
 async function runTests() {
@@ -43,6 +45,30 @@ async function runTests() {
   const mismatchedDecoded = verifyJwt(validToken, wrongSecret);
   assert.strictEqual(mismatchedDecoded, null, 'JWT verification with incorrect key should verify to null');
   console.log('✅ JWT Signature Key Verification: OK');
+
+  // Password hashing (scrypt) — see docs/decisions.md #002
+  const stored = hashPassword('hunter2');
+  assert.ok(verifyPassword('hunter2', stored), 'Correct password should verify');
+  assert.ok(!verifyPassword('hunter3', stored), 'Wrong password should fail');
+  assert.ok(!verifyPassword('hunter2', 'garbage'), 'Malformed hash should fail, not throw');
+  assert.notStrictEqual(hashPassword('hunter2'), stored, 'Salt must differ per hash');
+  console.log('✅ Password Hash & Verify: OK');
+
+  // Rate limiter — see docs/decisions.md #005
+  const t0 = 1_000_000;
+  for (let i = 0; i < 3; i++) assert.ok(rateLimit('ip1', 3, 1000, t0), `attempt ${i + 1} within limit`);
+  assert.ok(!rateLimit('ip1', 3, 1000, t0), '4th attempt is blocked');
+  assert.ok(rateLimit('ip2', 3, 1000, t0), 'other key is independent');
+  assert.ok(rateLimit('ip1', 3, 1000, t0 + 1000), 'window resets after windowMs');
+  console.log('✅ Rate Limiter: OK');
+
+  // DL upload validator — see docs/decisions.md #006
+  assert.strictEqual(validateDlFile('image/jpeg', 1024), null, 'JPEG under limit is accepted');
+  assert.strictEqual(validateDlFile('application/pdf', 4 * 1024 * 1024), null, 'Exactly 4MB is accepted');
+  assert.ok(validateDlFile('image/jpeg', 4 * 1024 * 1024 + 1), 'Over 4MB is rejected');
+  assert.ok(validateDlFile('text/html', 10), 'Non-image/PDF mime is rejected');
+  assert.ok(validateDlFile('image/jpeg', 0), 'Empty file is rejected');
+  console.log('✅ DL Upload Validator: OK');
 
   // ==========================================
   // 2. INTEGRATION TESTS: BOOKING RULES

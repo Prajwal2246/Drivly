@@ -4,6 +4,15 @@ Use this file to track implementation progress across all development phases. Fe
 
 ---
 
+## 🚧 Pending Manual Steps (blocked on env / infra — 2026-09-16)
+Required after Module 1 (Auth) changes. See `docs/decisions.md` #002, #003, #006.
+- [x] Supabase → Storage → create **private** bucket `dl`
+- [ ] Local: `cp .env.example .env`, fill `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- [ ] Vercel → Project Settings → Environment Variables: same five, for Production + Preview (build fails without them — intended)
+- [ ] `npx prisma db push` — applies `dlFileName → dlPath`, `preVerifyDl → dlVerified` rename
+- [ ] `npx prisma db seed` — re-creates demo users (old pbkdf2 password hashes no longer verify after scrypt switch)
+- [ ] Verify bucket is reachable: `GET $SUPABASE_URL/storage/v1/bucket/dl` with the service key returns `"public": false`
+
 ## 📂 Phase 0: Product Planning & Setup (Done)
 - [x] Create flat `/docs` folder structure under root
 - [x] Write `vision.md` (Problem, audience, monetization, assumptions)

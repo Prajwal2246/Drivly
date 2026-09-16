@@ -1,0 +1,54 @@
+# Decision Log
+
+Append-only. One entry per non-obvious choice. Never edit an old entry; add a new one that says "supersedes #N".
+
+Format: **context** (what was true when we decided) → **decision** → **rejected** (and why) → **consequences** (what this commits us to).
+
+---
+
+## 001 — Keep decisions in a single file (2026-09-16)
+
+**Context:** No record of *why* anything was built the way it is. One contributor, ~25 commits.
+**Decision:** One `docs/decisions.md`, append-only, numbered entries.
+**Rejected:** ADR folder with one file per decision + template — process overhead for a solo project.
+**Consequences:** Split into a folder when this passes ~30 entries.
+
+## 002 — Password hashing: scrypt via Node `crypto` (2026-09-16)
+
+**Context:** `hashPassword` used PBKDF2-SHA512 with 1,000 iterations (OWASP recommends 210,000) and compared hashes with `===` (not constant-time).
+**Decision:** `crypto.scryptSync` with Node defaults (N=16384, r=8, p=1), 16-byte random salt, `timingSafeEqual` for comparison. Stored format unchanged: `salt:hash` (hex).
+**Rejected:** bcrypt / argon2 — need a native npm dependency; scrypt is stdlib, memory-hard, and GPU-resistant where PBKDF2 is not. Raising PBKDF2 iterations — still not memory-hard.
+**Consequences:** Existing pbkdf2 hashes in `users.password` no longer verify. No migration shim because there are no real users yet — re-run `npx prisma db seed`. If real users exist later, add a format prefix and re-hash on successful login.
+
+## 003 — Required env vars fail at boot; no fallbacks (2026-09-16)
+
+**Context:** `ADMIN_SESSION_SECRET` had a hardcoded fallback repeated in 15 files; `ADMIN_PASSWORD` fell back to `'admin'`. A missing env var in prod would silently run with a secret that is public on GitHub — anyone could forge an admin cookie. `proxy.ts` also logged the secret prefix.
+**Decision:** `src/lib/env.ts` reads each required var once and throws at import time if missing (secret must be ≥32 chars). All consumers import `SESSION_SECRET` / `ADMIN_PASSWORD` from it. Debug logs in `proxy.ts` removed. `.env.example` added (README referenced it but it didn't exist).
+**Rejected:** zod-validated env schema (t3-env style) — 2 vars don't justify it; revisit when `env.ts` passes ~8 vars. Per-file `process.env` reads — that's how the fallback got copy-pasted 15 times.
+**Consequences:** `next build` and `next dev` crash immediately without a `.env` — intended. Vercel must have both vars set at build time. `DATABASE_URL` moves here in a later entry.
+
+## 004 — One session read/write path: `src/lib/session.ts` (2026-09-16)
+
+**Context:** Cookie name, `verifyJwt` call, and the JWT payload shape were copy-pasted across 16 files. `verifyJwt` returns `any`, so field typos compiled. Found one live bug while refactoring: `feed/[id]/page.tsx` passed `user.id` (the claim is `userId`) — always `undefined`, so `isOwner` was always false and owners saw a "Book" button on their own listing (the API blocked it; the UI didn't).
+**Decision:** `getSession(req?)` (route handlers pass `req`; server components omit it) returns a typed `Session | null`. `signSession(claims)` owns the TTL and secret. `SESSION_COOKIE` constant replaces the string. Kept in a separate file from `auth.ts` so `auth.ts` has no env/Next imports and stays runnable in `tests/check.ts`.
+**Rejected:** `withAuth(handler)` HOC — one-line call site is just as short and reads plainly. NextAuth/Auth.js — one cookie, one HMAC, no OAuth providers; 40 lines we can read beats a dependency to patch. Swap when Google/OTP login is actually needed.
+**Consequences:** `Session.role` is `string` until Prisma enums (task 2.1) let it narrow. `admin_session` untouched — task 7.1 deletes it.
+
+## 005 — Login rate limiting: in-memory fixed window (2026-09-16)
+
+**Context:** `/api/auth/login`, `/api/auth/user-login`, `/api/admin/login` accepted unlimited attempts — a script could guess passwords at network speed.
+**Decision:** `src/lib/rate-limit.ts`: fixed-window `Map` keyed by `route:ip`, 10 attempts / 15 min, `429 TOO_MANY_REQUESTS`. IP from the first `x-forwarded-for` hop (Vercel sets it; falls back to `'unknown'`, which means all un-proxied traffic shares one bucket — acceptable locally).
+**Rejected:** Upstash / Vercel KV — a dependency and a paid service for a threat we haven't observed. Sliding window / token bucket — more code, same protection at this scale. Per-phone keying — lets an attacker lock a victim out; per-IP doesn't.
+**Consequences:** Counter is per serverless instance and resets on cold start, so real ceiling is 10 × instances. `x-forwarded-for` is spoofable if the app is ever run without a trusted proxy in front. Both are the upgrade trigger for a shared store.
+
+## 006 — Driving licence upload: Supabase Storage, private bucket, admin-verified (2026-09-16)
+
+**Context:** Register form had a fake progress bar; only the filename string was stored. `preVerifyDl` was a user-ticked checkbox that owners saw as "DL Pre-Verified". Nothing was stored or verified.
+**Decision:**
+- Upload moves to Profile (needs a session — anonymous uploads at register would be free storage for anyone). Register loses the DL block.
+- Files go to a **private** Supabase Storage bucket `dl` via plain `fetch` to the REST API (`POST /storage/v1/object/…` with `x-upsert`), key `<userId>.<ext>`. Reads are 5-minute signed URLs, minted only for admins.
+- Columns renamed on `User`: `dlFileName → dlPath` (storage key), `preVerifyDl → dlVerified` (admin-only flag). `UserWaitlist` keeps its self-declared fields — that form is intent, not verification.
+- Re-upload resets `dlVerified`. Limits: JPEG/PNG/WebP/PDF, ≤4MB (Vercel route-handler body cap is 4.5MB). Validator lives in `validations.ts` so it's env-free and tested.
+- Admin page gains a Users table with View (signed-URL redirect) and Verify/Revoke. `/api/admin/*` routes now check the admin cookie themselves — the proxy matcher only covers `/admin/*` pages, which was a latent gap.
+**Rejected:** `@supabase/supabase-js` — two REST calls don't justify a dependency. Postgres `bytea` — bloats every backup and `SELECT *`. Public bucket — it's a government ID. Owner viewing renter's DL — admin verifies, owner sees the badge; add if owners ask.
+**Consequences:** Two new required env vars (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) — app won't boot without them. Bucket `dl` must be created manually (private). `prisma db push` required for the rename. Service-role key bypasses RLS, so it must never reach the client — it's only imported in `storage.ts`, a server module.

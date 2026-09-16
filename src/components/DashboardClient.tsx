@@ -44,7 +44,7 @@ interface Booking {
   vehicle: Vehicle & {
     owner: { name: string; phone: string };
   };
-  renter: { name: string; phone: string; preVerifyDl: boolean; dlFileName: string | null };
+  renter: { name: string; phone: string; dlVerified: boolean; dlPath: string | null };
 }
 
 interface DashboardClientProps {
@@ -648,12 +648,15 @@ export default function DashboardClient({
                         </p>
                         
                         {/* Driver license badge */}
-                        {b.renter.preVerifyDl && (
+                        {b.renter.dlVerified ? (
                           <div className="mt-3 inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-bold border border-emerald-100">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            DL Pre-Verified ({b.renter.dlFileName})
+                            <ShieldCheck className="w-3.5 h-3.5" /> DL Verified
                           </div>
-                        )}
+                        ) : b.renter.dlPath ? (
+                          <div className="mt-3 inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[9px] font-bold border border-amber-100">
+                            DL uploaded, pending review
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-100">

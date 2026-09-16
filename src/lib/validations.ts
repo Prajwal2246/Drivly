@@ -66,8 +66,6 @@ export const registerSchema = z.object({
   societyName: z.string().min(2, { message: 'Society name must be at least 2 characters.' }),
   role: z.enum(['OWNER', 'RENTER', 'BOTH'], { message: 'Please select a valid role.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  preVerifyDl: z.boolean().optional(),
-  dlFileName: z.string().nullable().optional(),
 });
 
 export const loginSchema = z.object({
@@ -78,3 +76,12 @@ export const loginSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 
+
+// DL upload limits — mime → storage extension. 4MB: Vercel route-handler body cap is 4.5MB.
+export const DL_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+export function validateDlFile(type: string, size: number): string | null {
+  if (!DL_EXT[type]) return 'Only JPEG, PNG, WebP or PDF files are accepted.';
+  if (size <= 0) return 'File is empty.';
+  if (size > 4 * 1024 * 1024) return 'File must be 4MB or smaller.';
+  return null;
+}

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import AdminUsersTable, { type AdminUser } from './AdminUsersTable';
 import { 
   Search, Download, LogOut, ChevronDown, ChevronUp, 
   Car, User, Phone, Mail, MapPin, Building, Calendar, DollarSign 
@@ -25,9 +26,10 @@ interface WaitlistEntry {
 
 interface AdminDashboardClientProps {
   initialData: WaitlistEntry[];
+  users: AdminUser[];
 }
 
-export default function AdminDashboardClient({ initialData }: AdminDashboardClientProps) {
+export default function AdminDashboardClient({ initialData, users }: AdminDashboardClientProps) {
   const [data, setData] = useState<WaitlistEntry[]>(initialData);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
@@ -208,6 +210,8 @@ export default function AdminDashboardClient({ initialData }: AdminDashboardClie
             </div>
           </div>
         </div>
+
+        <AdminUsersTable users={users} />
 
         {/* Table Area */}
         <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">

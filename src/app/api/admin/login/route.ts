@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signJwt } from '@/lib/auth';
+import { SESSION_SECRET, ADMIN_PASSWORD } from '@/lib/env';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { apiError } from '@/lib/errors';
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(`admin-login:${clientIp(req)}`)) {
+    return apiError('TOO_MANY_REQUESTS', 'Too many login attempts. Try again in 15 minutes.');
+  }
   try {
     const { password } = await req.json();
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
 
-    if (password === adminPassword) {
+    if (password === ADMIN_PASSWORD) {
       const response = NextResponse.json({ success: true, message: 'Authenticated successfully.' });
       
       // Sign HS256 JWT Session Token (1 day exp)
       const token = signJwt(
         { role: 'admin', exp: Date.now() + 1000 * 60 * 60 * 24 },
-        secret
+        SESSION_SECRET
       );
       
       // Set secure HTTP-only cookie with JWT

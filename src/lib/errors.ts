@@ -7,6 +7,7 @@ export type ErrorCode =
   | 'NOT_FOUND'
   | 'CONFLICT'
   | 'VALIDATION_ERROR'
+  | 'TOO_MANY_REQUESTS'
   | 'INTERNAL_ERROR';
 
 const HTTP_STATUS_MAP: Record<ErrorCode, number> = {
@@ -16,6 +17,7 @@ const HTTP_STATUS_MAP: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   VALIDATION_ERROR: 422,
+  TOO_MANY_REQUESTS: 429,
   INTERNAL_ERROR: 500
 };
 

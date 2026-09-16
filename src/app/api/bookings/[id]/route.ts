@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { verifyJwt } from '@/lib/auth';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
+import { getSession } from '@/lib/session';
 
 export async function PATCH(
   req: NextRequest,
@@ -10,9 +10,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const session = req.cookies.get('user_session')?.value;
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-    const userPayload = verifyJwt(session, secret);
+    const userPayload = await getSession(req);
 
     if (!userPayload) {
       return apiError('UNAUTHORIZED', 'Unauthorized');

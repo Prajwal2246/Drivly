@@ -54,24 +54,25 @@ export function verifyJwt(token: string | undefined, secret: string): any | null
 }
 
 /**
- * Hashes a password securely using built-in crypto pbkdf2Sync.
+ * Hashes a password with scrypt (memory-hard, stdlib). Stored as `salt:hash` hex.
+ * See docs/decisions.md #002.
  */
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   return `${salt}:${hash}`;
 }
 
 /**
- * Verifies a password against a stored pbkdf2 hash.
+ * Verifies a password against a stored scrypt hash in constant time.
  */
 export function verifyPassword(password: string, hashWithSalt: string): boolean {
   try {
     const [salt, hash] = hashWithSalt.split(":");
-    const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
-    return hash === verifyHash;
-  } catch (error) {
+    const stored = Buffer.from(hash, "hex");
+    const computed = crypto.scryptSync(password, salt, stored.length);
+    return stored.length === 64 && crypto.timingSafeEqual(stored, computed);
+  } catch {
     return false;
   }
 }
-

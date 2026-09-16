@@ -35,8 +35,8 @@ model User {
   societyName String
   role        String   // 'RENTER' | 'OWNER' | 'BOTH'
   password    String   // hashed password
-  preVerifyDl Boolean  @default(false)
-  dlFileName  String?
+  dlPath      String?  // Supabase Storage key in the private `dl` bucket; null = not uploaded
+  dlVerified  Boolean  @default(false) // set by admin only
   createdAt   DateTime @default(now())
 
   vehicles    Vehicle[]

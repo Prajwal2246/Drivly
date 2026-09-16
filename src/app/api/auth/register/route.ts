@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       return apiError('VALIDATION_ERROR', result.error.issues[0].message);
     }
 
-    const { name, email, phone, city, societyName, role, password, preVerifyDl, dlFileName } = result.data;
+    const { name, email, phone, city, societyName, role, password } = result.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
@@ -41,8 +41,6 @@ export async function POST(req: NextRequest) {
         societyName,
         role,
         password: hashedPassword,
-        preVerifyDl: !!preVerifyDl,
-        dlFileName: dlFileName || null,
       },
     });
 

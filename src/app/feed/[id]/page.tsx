@@ -1,8 +1,7 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { verifyJwt } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import VehicleDetailsClient from '@/components/VehicleDetailsClient';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,10 +12,7 @@ interface PageProps {
 export default async function VehicleDetailsPage({ params }: PageProps) {
   const { id } = await params;
   
-  const cookieStore = await cookies();
-  const token = cookieStore.get('user_session')?.value;
-  const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-  const user = verifyJwt(token, secret);
+  const user = await getSession();
 
   if (!user) {
     redirect('/login');
@@ -98,7 +94,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
 
   return (
     <VehicleDetailsClient 
-      user={user}
+      user={{ id: user.userId, name: user.name, society: user.society }}
       vehicle={serializedVehicle as any}
       reviews={serializedReviews}
       averageRating={averageRating}

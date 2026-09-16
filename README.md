@@ -46,7 +46,13 @@ ADMIN_PASSWORD="your_secure_admin_password"
 
 # Cryptographic secret for signing JWT session cookies (at least 32 characters)
 ADMIN_SESSION_SECRET="your_secure_random_jwt_signing_secret_key_here"
+
+# Supabase Storage for driving-licence uploads (create a PRIVATE bucket named `dl`)
+SUPABASE_URL="https://xxxx.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="service_role_key_from_project_settings"
 ```
+
+All four are required — the app fails at startup if any is missing.
 
 ### 2. Generate Prisma Client
 

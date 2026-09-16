@@ -29,8 +29,7 @@ async function main() {
         societyName: 'Greenwood Heights',
         role: 'RENTER',
         password: demoPasswordHash,
-        preVerifyDl: true,
-        dlFileName: 'demo_license.pdf',
+        dlVerified: true,
       },
     });
 

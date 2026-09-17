@@ -21,6 +21,9 @@ Needed before Modules 1–3 can be verified against a real database. See decisio
 - [ ] Smoke test: demo login → list vehicle with photo → unlist/relist → book from vehicle page (expected to fail until 4.3) → admin DL view
 - [ ] Mark 🔍 tasks ✅ in the plan
 
+## 🔥 Critical
+- [ ] 1.7 Demo login (`/api/auth/user-login`) issues a session for any phone without a password — fix before deploying
+
 ## ▶️ Up next — Module 4: Bookings & Trip Lifecycle
 - [ ] 4.3 Server-side `totalCost` (also fixes the detail-page booking 400)
 - [ ] 4.1 Booking state machine `canTransition(from, to, actor)`

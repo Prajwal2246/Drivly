@@ -14,7 +14,7 @@ Source of truth for the improvement work. `task_queue.md` holds only the next ac
 
 | Module | Status | Commit |
 |---|---|---|
-| 1. Auth & Sessions | 🔍 6/6 | `fbb0a76` |
+| 1. Auth & Sessions | 🔍 6/7 — **1.7 critical, do first** | `fbb0a76` |
 | 2. Database | 🔍 6/6 | `a0cce60` |
 | 3. Vehicles & Feed | 🔍 3/5 done, 2 skipped | `9b98d85` |
 | 4. Bookings & Trip Lifecycle | ⬜ 0/5 — **next** | |
@@ -39,6 +39,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 | 1.4 | Extract `getSession(req)` helper | S | Dedup ~16 copies; caught `user.id` vs `userId` bug | ✅ | #004 |
 | 1.5 | Rate limit login routes (in-memory, IP-keyed) | S | First question on any login form | ✅ | #005 |
 | 1.6 | Real DL upload to Supabase Storage, admin-verified | M | Was a fake claim | 🔍 | #006 |
+| 1.7 | **Added, critical:** `POST /api/auth/user-login` signs a session for any phone with no password — anyone can log in as any user. Gate demo login to demo phones only (or route it through password auth; `origin/develop` 66177e0 has a fix to compare) | S | Full account takeover | ⬜ **do first** | |
 
 ## 2. Database (`prisma/schema.prisma`, `src/lib/db.ts`)
 | # | Change | Size | Why | Status | Log |
@@ -99,6 +100,8 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 | 8.4 | Mobile layout check on dashboard tables | S | | ⬜ | |
 | 8.5 | **Added:** clients show `[object Object]` because API errors are `{ code, message }`; read `data.error.message` everywhere (fixed only in files touched by Module 3) | S | Every error message is broken | ⬜ | #013 |
 | 8.6 | **Added:** `FeedClient` booking modal is unreachable (`onRequest` never called by `VehicleCard`) — delete or wire up | S | Dead code | ⬜ | |
+| 8.7 | **Added:** "Verified Owner" / "DL Verified host" badges are hardcoded (`VehicleCard`, `VehicleDetailsClient`) — drive from `owner.dlVerified`. Landing/FAQ/SEO copy says "verified societies" though societies are self-declared | S | Fake trust claims | ⬜ | |
+| 8.8 | **Added:** Landing society suggestions show made-up listing counts/distances, and "Greenwood Heights Cluster" doesn't match the seeded "Greenwood Heights" (registering creates an empty society). Remove fake numbers, fix names | S | Fake data | ⬜ | |
 
 ## 9. Quality, CI, Observability
 | # | Change | Size | Why | Status | Log |
@@ -124,7 +127,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 `/api/health` endpoint · request latency timing · Sentry · audit-log table · soft deletes · background job queue for notifications · society radius/maps · owner booking calendar · admin charts · OpenAPI spec · API versioning · feature flags · correlation IDs (overlaps 9.4).
 
 ## Suggested order for what's left
-1. Manual steps in `task_queue.md` → verify Modules 1–3 against a real DB.
+1. **1.7** (auth bypass) before any deployment. Manual steps in `task_queue.md` → verify Modules 1–3 against a real DB.
 2. **4.3, 4.1, 4.2, 4.4** (fixes a live bug, then the core domain logic) → **9.1, 9.2** (CI + tests on that logic).
 3. **8.5** (every error message is broken), **4.5** (split dashboard).
 4. **7.1**, **5.2 → 5.1**, **5.3**, **5.4**.

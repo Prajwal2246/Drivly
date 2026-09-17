@@ -27,6 +27,7 @@ interface Vehicle {
   year: number;
   colorHex: string;
   pricePerHour: number;
+  photoUrl: string | null;
   available: boolean;
   owner: {
     name: string;
@@ -186,6 +187,7 @@ export default function FeedClient({ user, initialVehicles }: FeedClientProps) {
                 model={vehicle.model}
                 type={vehicle.type}
                 colorHex={vehicle.colorHex}
+                photoUrl={vehicle.photoUrl}
                 contribution={vehicle.pricePerHour}
                 isAvailable={vehicle.available}
                 onRequest={() => {

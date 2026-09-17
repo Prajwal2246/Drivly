@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import FeedClient from '@/components/FeedClient';
 import EmptyState from '@/components/EmptyState';
 import { getSession } from '@/lib/session';
+import { vehiclePhotoUrl } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,7 @@ export default async function FeedPage() {
       owner: {
         societyId: user.societyId,
       },
+      listed: true,
     },
     include: {
       owner: {
@@ -63,6 +65,7 @@ export default async function FeedPage() {
   const serializedVehicles = vehicles.map(v => ({
     ...v,
     pricePerHour: v.pricePerHour.toNumber(), // Decimal can't cross the RSC boundary
+    photoUrl: vehiclePhotoUrl(v.photoPath),
     createdAt: v.createdAt.toISOString(),
   })) as any;
 

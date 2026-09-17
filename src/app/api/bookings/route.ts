@@ -80,10 +80,12 @@ export async function POST(req: NextRequest) {
 
     // Fetch the vehicle to verify existence and ownership
     const vehicle = await prisma.vehicle.findUnique({
-      where: { id: vehicleId }
+      where: { id: vehicleId },
+      include: { owner: { select: { societyId: true } } },
     });
 
-    if (!vehicle) {
+    // Same 404 for other-society and unlisted vehicles: don't confirm they exist.
+    if (!vehicle || vehicle.owner.societyId !== userPayload.societyId || !vehicle.listed) {
       return apiError('NOT_FOUND', 'Vehicle not found.');
     }
 

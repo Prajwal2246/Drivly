@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import VehicleDetailsClient from '@/components/VehicleDetailsClient';
 import { getSession } from '@/lib/session';
+import { vehiclePhotoUrl } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,8 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
   });
 
   // 2. Enforce gated society security bounds
-  if (!vehicle || vehicle.owner.societyId !== user.societyId) {
+  // Unlisted vehicles stay visible to their owner only (#014)
+  if (!vehicle || vehicle.owner.societyId !== user.societyId || (!vehicle.listed && vehicle.ownerId !== user.userId)) {
     redirect('/feed');
   }
 
@@ -78,6 +80,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
     ...vehicle,
     owner: { id: vehicle.owner.id, name: vehicle.owner.name, phone: vehicle.owner.phone, societyName: vehicle.owner.society.name },
     pricePerHour: vehicle.pricePerHour.toNumber(), // Decimal can't cross the RSC boundary
+    photoUrl: vehiclePhotoUrl(vehicle.photoPath),
     createdAt: vehicle.createdAt.toISOString(),
     bookings: vehicle.bookings.map(b => ({
       id: b.id,

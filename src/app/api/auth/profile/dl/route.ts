@@ -4,7 +4,7 @@ import { getSession } from '@/lib/session';
 import { apiError } from '@/lib/errors';
 import { Logger } from '@/lib/logger';
 import { uploadDl } from '@/lib/storage';
-import { validateDlFile } from '@/lib/validations';
+import { validateUpload, DL_EXT } from '@/lib/validations';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const file = (await req.formData()).get('file');
     if (!(file instanceof File)) return apiError('BAD_REQUEST', 'No file provided.');
 
-    const invalid = validateDlFile(file.type, file.size);
+    const invalid = validateUpload(file.type, file.size, DL_EXT);
     if (invalid) return apiError('VALIDATION_ERROR', invalid);
 
     const dlPath = await uploadDl(user.userId, file);

@@ -37,6 +37,7 @@ interface VehicleDetailsProps {
     year: number;
     colorHex: string;
     pricePerHour: number;
+    photoUrl: string | null;
     available: boolean;
     ownerId: string;
     owner: {
@@ -294,11 +295,15 @@ export default function VehicleDetailsClient({
                   className="absolute w-48 h-48 rounded-full opacity-[0.06] blur-3xl pointer-events-none"
                 />
 
+                {vehicle.photoUrl ? (
+                  <img src={vehicle.photoUrl} alt={`${vehicle.brand} ${vehicle.model}`} className="w-full h-full object-cover select-none" />
+                ) : (
                 <img 
                   src={imageSrc}
                   alt={`${vehicle.brand} ${vehicle.model}`}
                   className="w-full h-full object-contain object-bottom scale-[1.08] translate-y-4 select-none mix-blend-multiply"
                 />
+                )}
               </div>
 
               {/* Verified Owner Widget */}

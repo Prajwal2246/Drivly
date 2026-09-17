@@ -106,6 +106,8 @@ model Vehicle {
   colorHex     String      @default("#000000") // used for dynamic silhouettes
   pricePerHour Decimal     @db.Decimal(10, 2)
   available    Boolean     @default(true)
+  listed       Boolean  @default(true) // owner's choice; `available` is trip state. See docs/decisions.md #014
+  photoPath    String?  // key in the public `vehicles` bucket; null = silhouette
   createdAt    DateTime    @default(now())
 
   owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)

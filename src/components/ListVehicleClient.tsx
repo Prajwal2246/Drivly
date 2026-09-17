@@ -27,6 +27,7 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
     pricePerHour: 100,
   });
 
+  const [photo, setPhoto] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +46,19 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to list vehicle.');
+        throw new Error(data.error?.message || 'Failed to list vehicle.');
+      }
+
+      // Photo is optional and uploaded after create (needs the vehicle id). A failed photo
+      // doesn't undo the listing — resubmitting would create a duplicate vehicle.
+      if (photo) {
+        const body = new FormData();
+        body.append('file', photo);
+        const photoRes = await fetch(`/api/vehicles/${data.vehicle.id}/photo`, { method: 'POST', body });
+        if (!photoRes.ok) {
+          const photoData = await photoRes.json().catch(() => null);
+          alert(`Vehicle listed, but the photo failed: ${photoData?.error?.message || 'upload error'}. You can add it from the dashboard.`);
+        }
       }
 
       router.push('/dashboard');
@@ -177,6 +190,15 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
                   className="mt-1.5 w-full px-3.5 py-3 bg-zinc-50 border border-zinc-200 focus:bg-white rounded-xl text-sm focus:outline-none"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="vehicle-photo" className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">Photo (optional, JPG/PNG/WebP, max 4MB)</label>
+              <input
+                id="vehicle-photo" type="file" accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+                className="mt-1.5 w-full text-xs text-zinc-600 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-zinc-100 file:font-bold"
+              />
             </div>
 
             <div>

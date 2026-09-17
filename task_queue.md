@@ -7,12 +7,13 @@ Use this file to track implementation progress across all development phases. Fe
 ## 🚧 Pending Manual Steps (blocked on env / infra — 2026-09-16)
 Required after Module 1 (Auth) and Module 2 (Database) changes. See `docs/decisions.md` #002, #003, #006, #009, #012.
 - [x] Supabase → Storage → create **private** bucket `dl`
+- [ ] Supabase → Storage → create **public** bucket `vehicles` (optional: restrict MIME to image/jpeg, image/png, image/webp; 4MB) — #015
 - [ ] Local: `cp .env.example .env`, fill `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - [ ] Vercel → Project Settings → Environment Variables: same five, for Production + Preview (build fails without them — intended)
 - [ ] `DATABASE_URL` = Supabase **Session pooler** URL (port 5432), locally and on Vercel. `POSTGRES_*` vars are no longer read (#012)
 - [ ] Clear old users (Module 2 adds a required `societyId` FK and enum columns; waitlist is kept):
       `echo 'TRUNCATE users, vehicles, bookings CASCADE;' | npx prisma db execute --stdin`
-- [ ] `npx prisma db push` — applies Module 1 renames + Module 2 enums, indexes, `societies` table, Decimal money
+- [ ] `npx prisma db push` — applies Module 1 renames, Module 2 enums/indexes/`societies`/Decimal, Module 3 `vehicles.listed` + `photoPath`
 - [ ] `npx prisma db seed` — re-creates demo society + users (old pbkdf2 hashes no longer verify after scrypt switch)
 - [ ] `npx tsx tests/booking-race.ts` — expect "1 of 10 concurrent requests won" (#011)
 - [ ] Verify bucket is reachable: `GET $SUPABASE_URL/storage/v1/bucket/dl` with the service key returns `"public": false`

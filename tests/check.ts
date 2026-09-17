@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { signJwt, verifyJwt, hashPassword, verifyPassword } from '../src/lib/auth';
 import { rateLimit } from '../src/lib/rate-limit';
-import { validateDlFile } from '../src/lib/validations';
+import { validateUpload, DL_EXT, PHOTO_EXT, vehicleSchema, vehicleUpdateSchema } from '../src/lib/validations';
 import { checkPastDate, checkOwnerBooking, checkOverlap } from '../src/lib/booking-rules';
 
 async function runTests() {
@@ -63,12 +63,26 @@ async function runTests() {
   console.log('✅ Rate Limiter: OK');
 
   // DL upload validator — see docs/decisions.md #006
-  assert.strictEqual(validateDlFile('image/jpeg', 1024), null, 'JPEG under limit is accepted');
-  assert.strictEqual(validateDlFile('application/pdf', 4 * 1024 * 1024), null, 'Exactly 4MB is accepted');
-  assert.ok(validateDlFile('image/jpeg', 4 * 1024 * 1024 + 1), 'Over 4MB is rejected');
-  assert.ok(validateDlFile('text/html', 10), 'Non-image/PDF mime is rejected');
-  assert.ok(validateDlFile('image/jpeg', 0), 'Empty file is rejected');
-  console.log('✅ DL Upload Validator: OK');
+  assert.strictEqual(validateUpload('image/jpeg', 1024, DL_EXT), null, 'JPEG under limit is accepted');
+  assert.strictEqual(validateUpload('application/pdf', 4 * 1024 * 1024, DL_EXT), null, 'Exactly 4MB is accepted');
+  assert.ok(validateUpload('image/jpeg', 4 * 1024 * 1024 + 1, DL_EXT), 'Over 4MB is rejected');
+  assert.ok(validateUpload('text/html', 10, DL_EXT), 'Non-image/PDF mime is rejected');
+  assert.ok(validateUpload('image/jpeg', 0, DL_EXT), 'Empty file is rejected');
+  assert.ok(validateUpload('application/pdf', 1024, PHOTO_EXT), 'Vehicle photos reject PDF');
+  console.log('✅ Upload Validator: OK');
+
+  // Vehicle schema — see docs/decisions.md #013
+  const car = { type: 'CAR', brand: ' Honda ', model: 'City', year: '2020', pricePerHour: '150' };
+  const parsed = vehicleSchema.parse(car);
+  assert.strictEqual(parsed.brand, 'Honda', 'brand is trimmed');
+  assert.strictEqual(parsed.year, 2020, 'year is coerced from form string');
+  assert.strictEqual(parsed.colorHex, '#000000', 'colour defaults');
+  assert.ok(!vehicleSchema.safeParse({ ...car, type: 'BOAT' }).success, 'unknown type rejected');
+  assert.ok(!vehicleSchema.safeParse({ ...car, pricePerHour: 0 }).success, 'zero price rejected');
+  assert.ok(!vehicleSchema.safeParse({ ...car, colorHex: 'red' }).success, 'non-hex colour rejected');
+  assert.ok(vehicleUpdateSchema.safeParse({ listed: false }).success, 'partial update with only listed is valid');
+  assert.ok(!vehicleUpdateSchema.safeParse({ listed: 'no' }).success, 'listed must be boolean');
+  console.log('✅ Vehicle Schema: OK');
 
   // ==========================================
   // 2. INTEGRATION TESTS: BOOKING RULES

@@ -23,6 +23,7 @@ Source of truth for the improvement work. `task_queue.md` holds only the next ac
 | 7. Admin | ⬜ 0/3 (7.2 partly done by 1.6) | |
 | 8. Frontend / UX | ⬜ 0/4 | |
 | 9. Quality, CI, Observability | ⬜ 0/5 | |
+| 10. Showcase (resume) | ⬜ 0/5 | |
 
 Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 
@@ -114,6 +115,16 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 
 ---
 
+## 10. Showcase (resume)
+Added 2026-09-17: what turns a working project into one that gets shortlisted — a link that works, proof it's tested, real numbers.
+| # | Change | Size | Why | Status | Log |
+|---|---|---|---|---|---|
+| 10.1 | Deploy to Vercel with seeded demo data; live URL + demo buttons at top of README | S | Reviewers click the link before reading code | ⬜ | |
+| 10.2 | 60–90s demo GIF/video of the full flow (list → book → approve → inspect → complete → refund) in README | S | Many reviewers watch instead of clicking | ⬜ | |
+| 10.3 | README "Engineering highlights" linking to decisions + architecture diagram (browser → routes → Prisma → Postgres / Storage / Razorpay webhook) + CI badge | S | 30-second proof of depth | ⬜ | |
+| 10.4 | Load test (k6/autocannon) on feed + booking create; `EXPLAIN ANALYZE` showing indexes used; record real p95 numbers in README | M | Real metrics for resume bullets — never invent numbers | ⬜ | |
+| 10.5 | Final resume bullets — only claims that are true, each backed by code, a test or a decision entry | S | One false claim sinks the rest in an interview | ⬜ | |
+
 ## Known ceilings (accepted shortcuts, with upgrade triggers)
 - Rate limiter is per serverless instance (#005) → shared store when abuse is observed.
 - Booking race protection covers only `createBookingIfFree` (#011) → exclusion constraint once on `prisma migrate`.
@@ -126,11 +137,68 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 ## Unscheduled ideas (carried over from the old task queue, not in this plan)
 `/api/health` endpoint · request latency timing · Sentry · audit-log table · soft deletes · background job queue for notifications · society radius/maps · owner booking calendar · admin charts · OpenAPI spec · API versioning · feature flags · correlation IDs (overlaps 9.4).
 
-## Suggested order for what's left
-1. **1.7** (auth bypass) before any deployment. Manual steps in `task_queue.md` → verify Modules 1–3 against a real DB.
-2. **4.3, 4.1, 4.2, 4.4** (fixes a live bug, then the core domain logic) → **9.1, 9.2** (CI + tests on that logic).
-3. **8.5** (every error message is broken), **4.5** (split dashboard).
-4. **7.1**, **5.2 → 5.1**, **5.3**, **5.4**.
-5. Module 6, 7.2/7.3, rest of 8 and 9.
+## Roadmap — execution order
+Each phase ends with a **gate**: don't start the next phase until it passes. One branch + PR per phase; CI must be green before merge (from Phase 1 onward).
 
-**Resume line once done:** *"Built a multi-tenant P2P vehicle-sharing platform (Next.js 16, Prisma/Postgres, Razorpay) with a transactional booking state machine, race-safe availability checks, scrypt-based auth, and CI-gated test suite."*
+### Phase 1 — Make it work (~1–2 days; branch `feat/auth-hardening`, PR #6, then `fix/demo-blockers`)
+1. **1.7** Remove passwordless demo login → demo buttons use real login
+2. **Verify Modules 1–3 on a real DB** — manual steps in `task_queue.md` (you), fix whatever breaks (code)
+3. **Merge PR #6 → deploy** (10.1, first pass)
+4. **9.1** CI pipeline — before more features, so every later PR is checked
+5. **8.5** error messages · **8.7** real verified badges + honest copy · **8.8** remove fake society data
+
+**Gate:** live URL; a stranger can use demo login, browse the feed, list a vehicle with a photo, and see real error messages. (Booking from the vehicle page still fails until 4.3.)
+
+### Phase 2 — Make it credible (~2–3 days; branch `feat/bookings`)
+6. **4.3** Server-side pricing (fixes detail-page booking; one pricing function shared with the UI quote)
+7. **4.1** State machine `canTransition` + participant check (closes skip-approval and stranger-cancel holes)
+8. **4.2** Cancellation + refund rule
+9. **4.4** Odometer validation + per-km overage
+10. **9.2** Tests for every transition and the pricing math — written alongside 6–9, not after
+11. **8.6** Delete dead feed modal · **4.5** Split `DashboardClient.tsx` (last, once the flow is final)
+12. **5.4 + 9.5** Reconcile/delete stale docs · **10.2** demo GIF · **10.3** README highlights + diagram + CI badge
+
+**Gate — resume-ready checkpoint:** full booking lifecycle works on the live URL, CI green with lifecycle tests, README shows GIF + badge + highlights.
+
+### Phase 3 — Stand out (~4–5 days; branches `feat/admin-auth`, `feat/payments`)
+13. **7.1** `User.isAdmin` replaces shared admin password (before payments: admin resolves disputes/refunds)
+14. **5.2** `Transaction` table
+15. **5.1** Razorpay test mode: hold on approve, capture on complete, refund on cancel; signature-verified, idempotent webhook
+16. **5.3** Challan dispute → admin resolves
+17. **9.3** Postgres in CI; run `tests/booking-race.ts` + one API integration test there
+
+**Gate:** a test-mode payment round-trip (hold → capture/refund) visible in the Razorpay dashboard and the `Transaction` table; CI runs DB tests.
+
+### Phase 4 — Measure and polish (~1–2 days)
+18. **9.4** Request ids in logs
+19. **10.4** Load test + `EXPLAIN ANALYZE`; put real numbers in README
+20. **10.5** Write resume bullets from what's now true
+21. Optional, only if time: **6.1–6.3** ratings · **7.2** society admin/merge · **7.3** waitlist invites · **8.1–8.4** RSC, loading/error states, a11y, mobile
+
+**Not doing** (low shortlisting value): maps/radius, feature flags, API versioning, Sentry mock, feed pagination (#016).
+
+---
+
+## Resume strategy
+
+### How shortlisting works (what this plan optimizes for)
+1. **Keyword filter (ATS / recruiter):** Next.js, TypeScript, PostgreSQL, Prisma, REST APIs, transactions, CI/CD, testing, payments.
+2. **6-second skim:** numbers, concrete engineering words ("race condition", "state machine", "webhook"), a link.
+3. **The link must work.** A broken demo or an honest "payments are simulated" caveat on a payments bullet is worse than no link.
+4. **Interview drills into one bullet.** `docs/decisions.md` is the prep — every choice has a written why and what was rejected. Re-read it before interviews.
+
+Rules: fewer things that are real, deployed, tested and explainable beat many half-done features. Never claim anything that isn't true (no "verified societies", invented user counts or made-up metrics).
+
+### Target resume bullets — use each only once its condition is met
+**Drivly — P2P vehicle-sharing platform for residential societies** · Next.js 16, TypeScript, PostgreSQL, Prisma, Razorpay · [live] [GitHub]
+
+| Bullet | True after |
+|---|---|
+| Built a multi-tenant rental marketplace with per-society data isolation, role-based access (renter/owner/admin), and server-side validation on every API route. | 1.7, 7.1 |
+| Prevented double-booking under concurrency with Postgres row-level locking inside a transaction; verified by a test where exactly 1 of 10 concurrent requests succeeds. | 2.5 verified, 9.3 |
+| Modeled the booking lifecycle as an explicit state machine (request → approve → inspect → active → complete/cancel) with server-computed pricing, deposits, fines and refunds using `Decimal` money. | Phase 2 |
+| Integrated Razorpay (test mode) for deposit hold, capture and refund with signature-verified, idempotent webhooks and a transaction audit trail. | 5.1, 5.2 |
+| Hardened authentication: scrypt password hashing, signed HttpOnly session cookies, login rate limiting, fail-fast secret config; found and fixed an account-takeover bug in a self-audit. | 1.7 |
+| Set up a GitHub Actions pipeline (typecheck, lint, unit + DB integration tests, build); reduced key query latency to ___ ms p95 through indexing. | 9.1–9.3, 10.4 (real number only) |
+
+One-line summary once Phase 3 is done: *"Built a multi-tenant P2P vehicle-sharing platform (Next.js 16, Prisma/Postgres, Razorpay) with a transactional booking state machine, race-safe availability checks, scrypt-based auth, and CI-gated test suite."*

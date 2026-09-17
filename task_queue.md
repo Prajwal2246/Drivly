@@ -21,16 +21,16 @@ Needed before Modules 1–3 can be verified against a real database. See decisio
 - [ ] Smoke test: demo login → list vehicle with photo → unlist/relist → book from vehicle page (expected to fail until 4.3) → admin DL view
 - [ ] Mark 🔍 tasks ✅ in the plan
 
-## 🔥 Critical
-- [ ] 1.7 Demo login (`/api/auth/user-login`) issues a session for any phone without a password — fix before deploying
+## ▶️ Phase 1 — Make it work (full roadmap: `docs/improvement-plan.md` → Roadmap)
+- [ ] 1.7 Remove passwordless demo login (`/api/auth/user-login`) — **critical, first**
+- [ ] Manual steps above → verify Modules 1–3 on a real DB
+- [ ] Merge PR #6 → deploy to Vercel (10.1)
+- [ ] 9.1 CI pipeline (tsc, lint, tests/check.ts, build)
+- [ ] 8.5 Error messages · 8.7 Real verified badges + honest copy · 8.8 Remove fake society data
+- [ ] **Gate:** live demo works end to end except detail-page booking
 
-## ▶️ Up next — Module 4: Bookings & Trip Lifecycle
-- [ ] 4.3 Server-side `totalCost` (also fixes the detail-page booking 400)
-- [ ] 4.1 Booking state machine `canTransition(from, to, actor)`
-- [ ] 4.2 `CANCELLED` transition + refund rule
-- [ ] 4.4 Odometer rules + per-km overage
-- [ ] 4.5 Split `DashboardClient.tsx`
-- [ ] 9.1 / 9.2 CI pipeline + state-machine and cost tests (right after Module 4)
+## ⏭️ Phase 2 — Make it credible (`feat/bookings`)
+4.3 → 4.1 → 4.2 → 4.4 (+ 9.2 tests alongside) → 8.6, 4.5 → 5.4, 9.5, 10.2, 10.3 → **resume-ready checkpoint**
 
 ## 📋 Per-module checklist
 - [ ] `npx tsc --noEmit` clean

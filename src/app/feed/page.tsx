@@ -17,7 +17,7 @@ export default async function FeedPage() {
   const vehicles = await prisma.vehicle.findMany({
     where: {
       owner: {
-        societyName: user.society,
+        societyId: user.societyId,
       },
     },
     include: {
@@ -25,7 +25,6 @@ export default async function FeedPage() {
         select: {
           name: true,
           phone: true,
-          societyName: true,
         },
       },
     },
@@ -63,6 +62,7 @@ export default async function FeedPage() {
   // Serialize models into JSON‑safe payloads (date strings)
   const serializedVehicles = vehicles.map(v => ({
     ...v,
+    pricePerHour: v.pricePerHour.toNumber(), // Decimal can't cross the RSC boundary
     createdAt: v.createdAt.toISOString(),
   })) as any;
 

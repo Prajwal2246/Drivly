@@ -11,3 +11,5 @@ export const SESSION_SECRET = required('ADMIN_SESSION_SECRET', 32);
 export const ADMIN_PASSWORD = required('ADMIN_PASSWORD');
 export const SUPABASE_URL = required('SUPABASE_URL').replace(/\/$/, '');
 export const SUPABASE_SERVICE_ROLE_KEY = required('SUPABASE_SERVICE_ROLE_KEY');
+// One URL for app + migrations + seed. On Supabase use the Session pooler (IPv4, port 5432). See docs/decisions.md #012.
+export const DATABASE_URL = required('DATABASE_URL');

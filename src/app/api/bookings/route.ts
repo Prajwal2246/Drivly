@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
-import { checkPastDate, checkOwnerBooking } from '@/lib/booking-rules';
+import { checkPastDate, checkOwnerBooking, createBookingIfFree } from '@/lib/booking-rules';
 import { getSession } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
@@ -93,34 +93,18 @@ export async function POST(req: NextRequest) {
       return apiError('BAD_REQUEST', ownerErr);
     }
 
-    // 3. Block overlapping bookings for the same vehicle
-    const overlap = await prisma.booking.findFirst({
-      where: {
-        vehicleId,
-        status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] },
-        OR: [
-          {
-            startTime: { lte: end },
-            endTime: { gte: start }
-          }
-        ]
-      }
+    // 3. Block overlapping bookings for the same vehicle (race-safe)
+    const newBooking = await createBookingIfFree(prisma, {
+      renterId: userPayload.userId,
+      vehicleId,
+      start,
+      end,
+      totalCost: parseFloat(totalCost), // ponytail: client-supplied price — task 4.3 computes it server-side
     });
 
-    if (overlap) {
+    if (!newBooking) {
       return apiError('CONFLICT', 'This vehicle is already booked during the selected times.');
     }
-
-    const newBooking = await prisma.booking.create({
-      data: {
-        renterId: userPayload.userId,
-        vehicleId,
-        startTime: start,
-        endTime: end,
-        status: 'PENDING',
-        totalCost: parseFloat(totalCost),
-      },
-    });
 
     Logger.info('booking_requested', { bookingId: newBooking.id, renterId: userPayload.userId, vehicleId });
 

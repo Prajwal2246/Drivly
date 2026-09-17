@@ -27,7 +27,8 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
           id: true,
           name: true,
           phone: true,
-          societyName: true,
+          societyId: true,
+          society: { select: { name: true } },
         },
       },
       bookings: {
@@ -43,7 +44,7 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
   });
 
   // 2. Enforce gated society security bounds
-  if (!vehicle || vehicle.owner.societyName !== user.society) {
+  if (!vehicle || vehicle.owner.societyId !== user.societyId) {
     redirect('/feed');
   }
 
@@ -75,6 +76,8 @@ export default async function VehicleDetailsPage({ params }: PageProps) {
   // 5. Serialize dates safely for client component transmission
   const serializedVehicle = {
     ...vehicle,
+    owner: { id: vehicle.owner.id, name: vehicle.owner.name, phone: vehicle.owner.phone, societyName: vehicle.owner.society.name },
+    pricePerHour: vehicle.pricePerHour.toNumber(), // Decimal can't cross the RSC boundary
     createdAt: vehicle.createdAt.toISOString(),
     bookings: vehicle.bookings.map(b => ({
       id: b.id,

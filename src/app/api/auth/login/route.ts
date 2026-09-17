@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     // Find user by phone number
     const user = await prisma.user.findUnique({
       where: { phone },
+      include: { society: true },
     });
 
     if (!user) {
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     
     // Sign session token (1 day expiration)
-    const token = signSession({ userId: user.id, name: user.name, role: user.role, society: user.societyName });
+    const token = signSession({ userId: user.id, name: user.name, role: user.role, societyId: user.societyId, society: user.society.name });
 
     const response = NextResponse.json({
       success: true,
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
         id: user.id,
         name: user.name,
         role: user.role,
-        society: user.societyName,
+        society: user.society.name,
       },
     });
 

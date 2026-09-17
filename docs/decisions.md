@@ -52,3 +52,45 @@ Format: **context** (what was true when we decided) → **decision** → **rejec
 - Admin page gains a Users table with View (signed-URL redirect) and Verify/Revoke. `/api/admin/*` routes now check the admin cookie themselves — the proxy matcher only covers `/admin/*` pages, which was a latent gap.
 **Rejected:** `@supabase/supabase-js` — two REST calls don't justify a dependency. Postgres `bytea` — bloats every backup and `SELECT *`. Public bucket — it's a government ID. Owner viewing renter's DL — admin verifies, owner sees the badge; add if owners ask.
 **Consequences:** Two new required env vars (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) — app won't boot without them. Bucket `dl` must be created manually (private). `prisma db push` required for the rename. Service-role key bypasses RLS, so it must never reach the client — it's only imported in `storage.ts`, a server module.
+
+## 007 — Prisma enums for role, vehicle type, and booking/payment/challan status (2026-09-17)
+
+**Context:** Five columns were `String` with the allowed values in a comment. The DB accepted anything; `PATCH /api/bookings/[id]` wrote whatever `status` the client sent. `Session.role` was `string`.
+**Decision:** `Role`, `VehicleType`, `BookingStatus`, `PaymentStatus`, `ChallanStatus` enums. Unknown `status` / vehicle `type` from clients → 400 via `Object.hasOwn(Enum, value)` (not `in` — `'toString' in BookingStatus` is `true`). `Session.role` is now `Role`.
+**Rejected:** Check constraints on text columns — Prisma can't express them, and they don't give TS types. Enums on `UserWaitlist` — it's a signup survey whose rows may be real leads; converting risks them for no integrity gain.
+**Consequences:** Adding a status means a schema change + `db push`. Postgres can't drop an enum value in place — removing one later needs a type swap.
+
+## 008 — Indexes on foreign keys and the overlap query (2026-09-17)
+
+**Context:** Postgres does not index FK columns automatically. Feed (`users.societyId`), dashboard (`vehicles.ownerId`, `bookings.renterId`) and the overlap check (`bookings.vehicleId + time range`) were sequential scans.
+**Decision:** `User(societyId)`, `Vehicle(ownerId)`, `Booking(vehicleId, startTime, endTime)`, `Booking(renterId)`.
+**Rejected:** GiST index on `tstzrange(startTime, endTime)` — better for range overlap, but needs raw SQL outside `schema.prisma`; a btree led by `vehicleId` already narrows to one vehicle's handful of rows.
+**Consequences:** Slightly slower writes; irrelevant at this scale. Revisit with `EXPLAIN` if a vehicle ever has thousands of bookings.
+
+## 009 — Society is a table; tenancy filters on `societyId` (2026-09-17)
+
+**Context:** Tenant isolation compared free-text `User.societyName` strings. No place for society data, no admin management, and the session carried only the name.
+**Decision:** `Society(id, name, city)` with `@@unique([name, city])`. `User.societyName` and `User.city` are dropped for `User.societyId` (FK, `onDelete: Restrict`). Register/profile/demo login use Prisma `connectOrCreate` on `(name, city)`; inputs are trimmed. Session gains `societyId`; feed, vehicle detail and `GET /api/vehicles` filter on it. `getSession` returns `null` for cookies without `societyId` — Prisma drops `undefined` in `where`, so an old cookie would otherwise see every society's vehicles.
+**Rejected:** Unique on `name` alone — two cities can have a "Greenwood Heights". Case-insensitive matching (citext / `mode: 'insensitive'`) — needs an extension or a find-then-create race; exact match is no worse than before. Pick-from-list registration — needs admin-managed societies first (task 7.2).
+**Consequences:** `"Greenwood heights"` and `"Greenwood Heights"` are still separate societies — same as before, now fixable by an admin merge (7.2). Existing sessions are logged out once. Existing `users` rows can't be migrated by `db push` (required FK) — reset users/vehicles/bookings and re-seed (already required by #002).
+
+## 010 — Money is `Decimal(10,2)`; converted to number only at the display boundary (2026-09-17)
+
+**Context:** `pricePerHour`, `totalCost`, `depositAmount`, `refundAmount`, `challanPenalty` were `Float`. Refunds were computed as `Math.max(0, deposit - penalty)` on floats.
+**Decision:** `@db.Decimal(10, 2)`. Server math uses Decimal methods (`minus`, `Decimal.max`). Two boundaries convert to `number`, display only: (1) server pages call `.toNumber()` — verified in React's source that RSC rejects objects with `toJSON`; (2) `db.ts` overrides `Decimal.prototype.toJSON` to return a number so `NextResponse.json` doesn't emit `"180"` strings that clients would concatenate in `sum + b.totalCost`.
+**Rejected:** Integer paise — correct and what Razorpay wants, but every client display and input would need `/100` / `*100`; one `Math.round(x * 100)` at the Razorpay boundary (5.1) is cheaper. Per-route `Number()` in API responses — six sites today, and the next route forgets it.
+**Consequences:** The `toJSON` override is global to the process — anything JSON-serializing a Decimal gets a number (precision is safe to ~15 digits, far beyond `Decimal(10,2)`). New server pages passing money to client components must call `.toNumber()`. `UserWaitlist.expectedRentalPrice` stays `Float` (survey answer, see #007).
+
+## 011 — Race-safe booking: transaction + `SELECT … FOR UPDATE` on the vehicle row (2026-09-17)
+
+**Context:** `POST /api/bookings` ran the overlap `findFirst` and the `create` as separate statements. Two concurrent requests for the same slot could both pass the check and both insert.
+**Decision:** `createBookingIfFree(db, …)` in `booking-rules.ts`: interactive `$transaction` that locks the vehicle row (`FOR UPDATE`), re-checks overlap, then inserts. The second request blocks on the lock; under READ COMMITTED its overlap query runs after the first commits and sees the new row. `tests/booking-race.ts` fires 10 concurrent calls and asserts exactly one wins (needs a seeded DB).
+**Rejected:** Postgres exclusion constraint (`EXCLUDE USING gist (vehicleId WITH =, tstzrange(...) WITH &&) WHERE status IN (…)`) — strongest guarantee, but needs `btree_gist` and raw SQL that `db push` doesn't manage. SERIALIZABLE isolation — needs retry-on-40001 logic. Advisory locks — same effect as the row lock, less obvious.
+**Consequences:** Only code paths that take the lock are protected — any future write that creates or re-activates a booking must go through `createBookingIfFree` or take the same lock. Upgrade trigger for the exclusion constraint: adopting `prisma migrate` (raw SQL migrations).
+
+## 012 — One `DATABASE_URL`, read from `env.ts` (2026-09-17)
+
+**Context:** `db.ts` picked from four env vars (`POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `SUPABASE_DATABASE_URL`, `DATABASE_URL`) by preferring URLs containing `pooler`/`:6543`, falling back to a hardcoded localhost URL; `prisma.config.ts` checked them in a *different* order. The app and `db push` could silently target different databases. Added in July because Supabase's direct host is IPv6-only and Vercel is IPv4.
+**Decision:** `DATABASE_URL` only, required in `env.ts` (#003 said it would move there). On Supabase, use the **Session pooler** URL (IPv4, port 5432) — it works for the app, `db push` and seed, unlike the transaction pooler (6543). TLS on unless host is localhost. `PrismaPg` takes the config directly (no manual `pg.Pool`). `seed.ts` imports `prisma` from `db.ts` instead of building its own unencrypted pool. `prisma.config.ts` uses `?? ""` so `prisma generate` still works without a DB.
+**Rejected:** Separate `DIRECT_URL` for migrations — only needed with the transaction pooler; session pooler covers both.
+**Consequences:** Vercel must set `DATABASE_URL` (the Supabase integration's `POSTGRES_*` vars are no longer read). TLS still skips cert verification (`rejectUnauthorized: false`) — upgrade by passing Supabase's CA as `ssl.ca`.

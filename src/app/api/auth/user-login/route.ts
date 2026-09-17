@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     // Find the user by phone number
     let user = await prisma.user.findUnique({
       where: { phone },
+      include: { society: true },
     });
 
     // Fail-safe auto-creation if seed hasn't been run
@@ -34,18 +35,23 @@ export async function POST(req: NextRequest) {
           name,
           phone,
           email,
-          city: 'Mumbai',
-          societyName: society || 'Greenwood Heights',
+          society: {
+            connectOrCreate: {
+              where: { name_city: { name: society?.trim() || 'Greenwood Heights', city: 'Mumbai' } },
+              create: { name: society?.trim() || 'Greenwood Heights', city: 'Mumbai' },
+            },
+          },
           role,
           password: demoPasswordHash,
           dlVerified: !isOwner,
         },
+        include: { society: true },
       });
     }
 
     
     // Sign session token (1 day expiration)
-    const token = signSession({ userId: user.id, name: user.name, role: user.role, society: user.societyName });
+    const token = signSession({ userId: user.id, name: user.name, role: user.role, societyId: user.societyId, society: user.society.name });
 
     const response = NextResponse.json({
       success: true,
@@ -53,7 +59,7 @@ export async function POST(req: NextRequest) {
         id: user.id,
         name: user.name,
         role: user.role,
-        society: user.societyName,
+        society: user.society.name,
       },
     });
 

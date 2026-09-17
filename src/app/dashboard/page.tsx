@@ -2,8 +2,17 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import DashboardClient from '@/components/DashboardClient';
 import { getSession } from '@/lib/session';
+import type { Booking } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
+
+// Decimal can't cross the RSC boundary; display-only, so number is fine here.
+const moneyToNumbers = (b: Booking) => ({
+  totalCost: b.totalCost.toNumber(),
+  depositAmount: b.depositAmount.toNumber(),
+  refundAmount: b.refundAmount.toNumber(),
+  challanPenalty: b.challanPenalty.toNumber(),
+});
 
 export default async function DashboardPage() {
   const user = await getSession();
@@ -57,28 +66,33 @@ export default async function DashboardPage() {
   // Serialize date strings for JSON client safety
   const serializedRenterBookings = renterBookings.map(b => ({
     ...b,
+    ...moneyToNumbers(b),
     createdAt: b.createdAt.toISOString(),
     startTime: b.startTime.toISOString(),
     endTime: b.endTime.toISOString(),
     vehicle: {
       ...b.vehicle,
+      pricePerHour: b.vehicle.pricePerHour.toNumber(),
       createdAt: b.vehicle.createdAt.toISOString(),
     },
   })) as any;
 
   const serializedOwnerBookings = ownerBookings.map(b => ({
     ...b,
+    ...moneyToNumbers(b),
     createdAt: b.createdAt.toISOString(),
     startTime: b.startTime.toISOString(),
     endTime: b.endTime.toISOString(),
     vehicle: {
       ...b.vehicle,
+      pricePerHour: b.vehicle.pricePerHour.toNumber(),
       createdAt: b.vehicle.createdAt.toISOString(),
     },
   })) as any;
 
   const serializedMyVehicles = myVehicles.map(v => ({
     ...v,
+    pricePerHour: v.pricePerHour.toNumber(),
     createdAt: v.createdAt.toISOString(),
   })) as any;
 

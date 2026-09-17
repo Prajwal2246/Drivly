@@ -37,9 +37,8 @@ export async function POST(req: NextRequest) {
         name,
         email,
         phone,
-        city,
-        societyName,
         role,
+        society: { connectOrCreate: { where: { name_city: { name: societyName, city } }, create: { name: societyName, city } } },
         password: hashedPassword,
       },
     });

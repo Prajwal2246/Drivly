@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
 import { getSession } from '@/lib/session';
+import { VehicleType } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
     const vehicles = await prisma.vehicle.findMany({
       where: {
         owner: {
-          societyName: userPayload.society,
+          societyId: userPayload.societyId,
         },
       },
       include: {
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
           select: {
             name: true,
             phone: true,
-            societyName: true,
+            society: { select: { name: true } },
           },
         },
       },
@@ -52,6 +53,9 @@ export async function POST(req: NextRequest) {
 
     if (!type || !brand || !model || !year || !pricePerHour) {
       return apiError('BAD_REQUEST', 'Missing required parameters.');
+    }
+    if (!Object.hasOwn(VehicleType, type)) {
+      return apiError('BAD_REQUEST', 'Invalid vehicle type.'); // ponytail: full zod schema is task 3.1
     }
 
     const newVehicle = await prisma.vehicle.create({

@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { signJwt, verifyJwt } from '@/lib/auth';
+import type { Role } from '@prisma/client';
 import { SESSION_SECRET } from '@/lib/env';
 
 export const SESSION_COOKIE = 'user_session';
@@ -11,15 +12,19 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24; // 1 day
 export type Session = {
   userId: string;
   name: string;
-  role: string; // ponytail: 'RENTER' | 'OWNER' | 'BOTH' — narrows to a union once Prisma enums land (task 2.1)
-  society: string;
+  role: Role;
+  societyId: string;
+  society: string; // display name only — filter on societyId
   exp: number;
 };
 
 /** Pass `req` in route handlers; omit it in server components (reads next/headers). */
 export async function getSession(req?: NextRequest): Promise<Session | null> {
   const token = req ? req.cookies.get(SESSION_COOKIE)?.value : (await cookies()).get(SESSION_COOKIE)?.value;
-  return verifyJwt(token, SESSION_SECRET) as Session | null;
+  const session = verifyJwt(token, SESSION_SECRET) as Session | null;
+  // Cookies signed before the Society table (#009) have no societyId. Prisma drops `undefined` filters,
+  // so `where: { societyId: undefined }` would match every society — force a re-login instead.
+  return session?.societyId ? session : null;
 }
 
 export function signSession(claims: Omit<Session, 'exp'>): string {

@@ -20,8 +20,7 @@ export default async function ProfilePage() {
       name: true,
       email: true,
       phone: true,
-      city: true,
-      societyName: true,
+      society: { select: { name: true, city: true } },
       role: true,
       dlPath: true,
       dlVerified: true,
@@ -32,5 +31,6 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  return <ProfileClient initialUser={fullUser} />;
+  const { society, ...rest } = fullUser;
+  return <ProfileClient initialUser={{ ...rest, city: society.city, societyName: society.name }} />;
 }

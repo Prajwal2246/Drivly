@@ -8,8 +8,8 @@ import { getSession, signSession, SESSION_COOKIE } from '@/lib/session';
 const profileUpdateSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
-  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
-  societyName: z.string().min(2, { message: 'Society name must be at least 2 characters.' }),
+  city: z.string().trim().min(2, { message: 'City must be at least 2 characters.' }),
+  societyName: z.string().trim().min(2, { message: 'Society name must be at least 2 characters.' }),
   role: z.enum(['OWNER', 'RENTER', 'BOTH'], { message: 'Please select a valid role.' }),
 });
 
@@ -49,14 +49,14 @@ export async function PATCH(req: NextRequest) {
       data: {
         name,
         email,
-        city,
-        societyName,
         role,
-      }
+        society: { connectOrCreate: { where: { name_city: { name: societyName, city } }, create: { name: societyName, city } } },
+      },
+      include: { society: true },
     });
 
     // Re-sign session JWT with updated claims
-    const token = signSession({ userId: updatedUser.id, name: updatedUser.name, role: updatedUser.role, society: updatedUser.societyName });
+    const token = signSession({ userId: updatedUser.id, name: updatedUser.name, role: updatedUser.role, societyId: updatedUser.societyId, society: updatedUser.society.name });
 
     const response = NextResponse.json({
       success: true,
@@ -66,8 +66,8 @@ export async function PATCH(req: NextRequest) {
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
-        society: updatedUser.societyName,
-        city: updatedUser.city,
+        society: updatedUser.society.name,
+        city: updatedUser.society.city,
       }
     });
 

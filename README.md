@@ -1,166 +1,192 @@
-# 🚗 Drivly — Peer-to-Peer Society Vehicle Sharing Platform
+# 🚗 Drivly — Peer-to-Peer Vehicle Sharing for Residential Societies
 
-Drivly is a modern peer-to-peer vehicle sharing platform designed exclusively for verified residential gated societies. It operates like **Airbnb + Society Verification + Vehicle Sharing** for closed communities.
+Drivly lets residents of the same society rent cars and bikes to each other. Every user belongs to one society, and they only see and book vehicles listed in it.
 
-This repository implements the warm minimalist frontend entryway portal, interactive society map selection, secure user session routing, and an admin dashboard.
-
----
-
-## 🛠️ Tech Stack & Architecture
-
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router & React Server Components)
-- **Language**: [TypeScript](https://www.typescript.org/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (using variables and utility bindings)
-- **Database & ORM**: PostgreSQL with [Prisma ORM 7](https://www.prisma.io/) (utilizing native pg adapter drivers)
-- **Icons**: [Lucide React](https://lucide.dev/)
+> **Status:** working MVP under active improvement. Progress and remaining work: [`docs/improvement-plan.md`](docs/improvement-plan.md). Why things are built the way they are: [`docs/decisions.md`](docs/decisions.md).
 
 ---
 
-## 📋 Prerequisites
+## ✨ What it does
 
-Ensure you have the following installed on your machine:
+**Renters**
+- Browse vehicles listed in their own society, with owner photos or a type-based silhouette.
+- Request a booking for a time slot; overlapping requests are rejected, including concurrent ones (row lock inside a transaction).
+- Complete a pre-trip inspection checklist and starting odometer before the trip becomes active.
+- Review the owner after the trip.
 
-- [Node.js](https://nodejs.org/) (v18.x or later)
-- A running [PostgreSQL](https://www.postgresql.org/) database instance.
+**Owners**
+- List vehicles (validated server-side; renter-only accounts are blocked), upload a photo, edit, unlist/relist, or delete vehicles with no booking history.
+- Approve or reject requests, see the renter's driving-licence verification status.
+- Log a traffic challan; the fine is deducted from the renter's deposit.
+- Review the renter after the trip.
+
+**Everyone**
+- Register / log in with phone + password; switch role between Renter, Owner and Both in the profile.
+- Upload a driving licence (private storage); an admin verifies it.
+
+**Admin** (`/admin`)
+- Separate password login.
+- Waitlist signups: search, filter, CSV export.
+- Users: view each uploaded licence via a 5-minute signed link, verify or revoke it.
+
+**Honest limits**
+- **Payments are simulated.** Approving a booking marks a ₹5,000 deposit as held; completing it marks it paid and computes the refund. No money moves.
+- **Societies are self-declared.** A society is created the first time someone registers with a new name + city. Nothing verifies that users actually live there.
+- **"Verified Owner" / "DL Verified host" badges on vehicle cards are static text**, not driven by licence verification (tracked in the plan).
+- **Demo login** (`/login` → "Demo as Renter/Owner") signs in by phone number without a password. See the security note below.
 
 ---
 
-## 🔧 Getting Started & Local Setup
+## 🛠️ Tech stack
 
-### 1. Configure Environment Variables
+- **Next.js 16** (App Router, Server Components, `proxy.ts` route protection) + **React 19** + **TypeScript**
+- **PostgreSQL** via **Prisma 7** with the `@prisma/adapter-pg` driver adapter (hosted on Supabase)
+- **Supabase Storage** over its REST API (no SDK) for licences and vehicle photos
+- **Tailwind CSS v4**, **Lucide** icons, **zod** for input validation
+- Auth is hand-rolled: scrypt password hashing (Node `crypto`) and HS256-signed JWT session cookies
 
-Create your local `.env` file from the repository template:
+---
 
+## 🔧 Local setup
+
+### Prerequisites
+- **Node.js 20.9 or later** (required by Next.js 16)
+- A PostgreSQL database (local, or a Supabase project)
+- A Supabase project for file storage
+
+### 1. Install
+```bash
+npm install
+```
+
+### 2. Environment variables
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and fill in your variables:
+All five are required — `src/lib/env.ts` throws at startup (and `next build` fails) if any is missing.
 
 ```env
-# Database connection string
+# Postgres. On Supabase use the *Session pooler* URL (IPv4, port 5432) — it works for the app, db push and seed.
 DATABASE_URL="postgresql://username:password@localhost:5432/drivly_db?schema=public"
 
-# Password used to log into the /admin dashboard (e.g., admin)
-ADMIN_PASSWORD="your_secure_admin_password"
+# Password for the /admin dashboard
+ADMIN_PASSWORD="change-me"
 
-# Cryptographic secret for signing JWT session cookies (at least 32 characters)
-ADMIN_SESSION_SECRET="your_secure_random_jwt_signing_secret_key_here"
+# HS256 secret for session cookies, at least 32 characters: openssl rand -base64 32
+ADMIN_SESSION_SECRET=""
+
+# Supabase → Project Settings → API. The service-role key is server-only.
+SUPABASE_URL="https://xxxx.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY=""
 ```
 
-### 2. Generate Prisma Client
+### 3. Storage buckets (Supabase → Storage)
+| Bucket | Visibility | Used for |
+|---|---|---|
+| `dl` | **Private** | Driving licences (admin reads via signed URLs) |
+| `vehicles` | **Public** | Vehicle photos |
 
-Generates the local Prisma client files based on your PostgreSQL schema:
-
+### 4. Database
 ```bash
-npx prisma generate
+npx prisma generate   # Prisma client
+npx prisma db push    # create tables from prisma/schema.prisma
+npx prisma db seed    # demo society, two demo users, six vehicles
 ```
 
-### 3. Start the Application
+> Upgrading an existing database from before the Society/enum changes? `db push` can't add the required `societyId` to existing users. See the manual steps in [`task_queue.md`](task_queue.md).
 
-Install dependencies and start the development server:
-
+### 5. Run
 ```bash
-npm install
 npm run dev
 ```
+Open http://localhost:3000.
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+**Demo accounts** (created by the seed, society "Greenwood Heights", Mumbai):
 
----
-
-## 🔎 How to Verify Features
-
-### 1. Society Selection Entryway
-
-1. Scroll down to the **Enter your Society** section or click **Start Sharing Today** in the hero header.
-2. **Interactive Society Cluster Selection**: 
-   * Click inside the **Society / Community Name** field to trigger a localized gated society suggestion panel (e.g., Greenwood Heights, Green Park, Orchid Petals, Palm Meadows).
-   * Hovering or clicking society suggestions highlights pins on the accompanying interactive SVG neighborhood cluster map. Clicking map pins auto-fills the input field.
-3. Click **Enter Community**. This will dynamically trigger a redirect using the Next.js router, pushing you to `/login?society=[SelectedSocietyName]`.
-
-### 2. Admin Dashboard Access & Cryptographic Security
-
-1. Navigate to `/admin` or click the **Admin Portal** link in the website footer.
-2. Next.js 16 Proxy middleware intercepts the route, cryptographically validates the session cookie signature, checks expiration boundaries, and redirects unauthorized attempts to `/admin/login`.
-3. Input your `ADMIN_PASSWORD`.
-4. On validation, the backend generates and signs a secure **HS256 JSON Web Token (JWT)** containing your admin claims and a 24-hour expiration (`exp`), setting it as an `HttpOnly`, secure cookie named `admin_session`.
-5. Inside the Secure Dashboard Panel, you can inspect registered entries, filter signups, and log out securely.
+| Role | Phone | Password |
+|---|---|---|
+| Renter | `5550001111` | `demo123` |
+| Owner | `5550002222` | `demo123` |
 
 ---
 
-## 📁 Project Directory Structure
+## 🧪 Checks
+
+```bash
+npx tsc --noEmit              # type check
+npx tsx tests/check.ts        # unit checks: JWT, password hashing, rate limiter, upload + vehicle validation, booking rules (no DB needed)
+npx tsx tests/booking-race.ts # 10 concurrent bookings for one slot → exactly 1 succeeds (needs a seeded DB)
+npm run build                 # production build (needs env vars)
+npx eslint                    # lint
+```
+
+There is no `npm test` script or CI pipeline yet (plan task 9.1).
+
+---
+
+## 🛡️ Security
+
+What's in place:
+- **Passwords:** scrypt with a random 16-byte salt, constant-time comparison.
+- **Sessions:** HS256 JWT in an `HttpOnly`, `SameSite=Lax` cookie (`Secure` in production), 24-hour expiry. No fallback secret — missing config fails at boot.
+- **Rate limiting:** login routes allow 10 attempts per IP per 15 minutes. In-memory, so it's per serverless instance.
+- **Tenancy:** feed, vehicle pages and booking creation all check the user's `societyId`.
+- **Authorization in the API**, not just the UI: renters can't list vehicles; only owners edit/delete/photo their vehicles; only owners approve and only renters start/complete trips.
+- **Input validation:** zod on register, profile and vehicle routes; enum columns in Postgres reject unknown statuses; money is `Decimal(10,2)`.
+- **Files:** licences live in a private bucket and are only exposed to admins through short-lived signed URLs; uploads are type- and size-checked (≤4 MB).
+
+Known gaps (tracked in [`docs/improvement-plan.md`](docs/improvement-plan.md)):
+- ⚠️ **`POST /api/auth/user-login` (demo login) issues a session for any phone number without a password.** It must not be reachable in a real deployment.
+- Admin is a single shared password with its own cookie, separate from user accounts (task 7.1).
+- Booking price is sent by the client (task 4.3).
+- Database TLS doesn't verify the server certificate.
+
+---
+
+## 📁 Project structure
 
 ```
-├── .github/
-│   └── pull_request_template.md # GitHub PR Template
-├── docs/                       # Gated Society specification guides
-│   ├── architecture.md
-│   ├── database.md
-│   ├── requirements.md
-│   ├── roadmap.md
-│   ├── security.md
-│   └── vision.md
+├── docs/
+│   ├── improvement-plan.md       # Task-by-task plan with status — start here to pick up work
+│   ├── decisions.md              # Append-only decision log (what, why, what was rejected)
+│   └── vision.md, requirements.md, architecture.md, database.md, security.md, roadmap.md
 ├── prisma/
-│   ├── schema.prisma           # PostgreSQL DB models configuration
-│   └── seed.ts                 # Local DB sandbox seeding script
-├── scripts/                    # SDE engineering hooks
-│   ├── check-branch-name.sh
-│   └── install-hooks.js
+│   ├── schema.prisma             # Society, User, Vehicle, Booking, UserWaitlist + enums
+│   └── seed.ts                   # Demo data
+├── scripts/                      # Git hook: branch-name check (install: node scripts/install-hooks.js)
 ├── src/
+│   ├── proxy.ts                  # Redirects unauthenticated users away from /feed, /dashboard, /profile, /admin
 │   ├── app/
-│   │   ├── admin/
-│   │   │   ├── login/          # Admin login interface page
-│   │   │   └── page.tsx        # Server component to fetch database entries
-│   │   ├── api/
-│   │   │   ├── admin/
-│   │   │   │   ├── login/      # Authenticate credentials and sign HS256 JWT
-│   │   │   │   └── logout/     # Clear session cookie
-│   │   │   ├── auth/
-│   │   │   │   ├── login/      # User login endpoint
-│   │   │   │   ├── logout/     # User logout endpoint
-│   │   │   │   ├── profile/    # User profile update endpoint
-│   │   │   │   └── register/   # User registration endpoint
-│   │   │   ├── bookings/
-│   │   │   │   ├── [id]/       # Update booking status
-│   │   │   │   └── route.ts    # Fetch/create booking requests
-│   │   │   ├── vehicles/       # Fetch/create vehicle listings
-│   │   │   └── waitlist/       # Legacy waitlist api
-│   │   ├── dashboard/
-│   │   │   ├── list-vehicle/   # Listing page with role check
-│   │   │   └── page.tsx        # User dashboard page (RSC)
-│   │   ├── feed/               # Gated society vehicle sharing feed
-│   │   ├── login/              # User login & register pages
-│   │   ├── profile/            # User profile settings page
-│   │   ├── globals.css         # Animations & styles
-│   │   ├── layout.tsx          # Font loads & SEO OpenGraph metadata
-│   │   └── page.tsx            # Landing Page main entryway sections
-│   ├── components/             # Reusable UI dashboard views
-│   ├── lib/
-│   │   ├── auth.ts             # HS256 JWT helpers
-│   │   ├── booking-rules.ts    # Pure scheduling validation algorithms
-│   │   ├── db.ts               # Prisma client singleton
-│   │   ├── errors.ts           # Standard API HTTP errors
-│   │   ├── logger.ts           # Structured JSON event logger
-│   │   └── validations.ts      # Shared validation schemas
-│   └── proxy.ts                # Next.js 16 Proxy middleware routing interceptor
+│   │   ├── page.tsx              # Landing page
+│   │   ├── login/                # Login, register, demo login
+│   │   ├── feed/                 # Society vehicle feed; [id] = vehicle details + booking
+│   │   ├── dashboard/            # Rentals, my vehicles, incoming requests; list-vehicle/
+│   │   ├── profile/              # Profile, role, licence upload
+│   │   ├── admin/                # Admin dashboard + login
+│   │   └── api/
+│   │       ├── auth/             # login, user-login (demo), register, logout, profile, profile/dl
+│   │       ├── vehicles/         # GET/POST; [id] PATCH/DELETE; [id]/photo POST
+│   │       ├── bookings/         # GET/POST; [id] PATCH (status, inspection, reviews, challans)
+│   │       ├── admin/            # login, logout, users/[id] (verify), users/[id]/dl (signed URL)
+│   │       └── waitlist/         # Unused by the current UI
+│   ├── components/               # Client components (FeedClient, DashboardClient, VehicleCard, …)
+│   └── lib/
+│       ├── env.ts                # Required env vars, fail at boot
+│       ├── db.ts                 # Prisma client
+│       ├── auth.ts               # JWT sign/verify, scrypt hashing
+│       ├── session.ts            # getSession / signSession
+│       ├── rate-limit.ts         # Login rate limiter
+│       ├── storage.ts            # Supabase Storage uploads, public + signed URLs
+│       ├── booking-rules.ts      # Date/overlap rules, race-safe booking create
+│       ├── validations.ts        # zod schemas, upload validator
+│       ├── errors.ts             # apiError() → { success: false, error: { code, message } }
+│       └── logger.ts             # Structured JSON logs
 ├── tests/
-│   └── check.ts                # Zero-framework Node assert test verification runner
-├── ARCHITECTURE.md             # Architecture spec doc
-├── DATABASE.md                 # Database schema description doc
-├── SECURITY.md                 # Security gating and session description doc
-├── API.md                      # API route payloads and standard errors doc
-├── DEPLOYMENT.md               # Local setup and seed configuration doc
-├── CONTRIBUTING.md             # Git branch naming and hook configs doc
-├── task_queue.md               # 22-phase task queue tracker
-├── package.json                # Project script commands & dependency bundles
-├── tsconfig.json               # TypeScript configuration parameters
-└── postcss.config.mjs          # PostCSS configuration bindings
+│   ├── check.ts                  # DB-free assert checks
+│   └── booking-race.ts           # Concurrency check against a real DB
+├── task_queue.md                 # Next actions + pending manual infra steps
+└── API.md, ARCHITECTURE.md, DATABASE.md, SECURITY.md, DEPLOYMENT.md, CONTRIBUTING.md
 ```
 
----
-
-## 🛡️ Security & Validations
-
-- **Cryptographic JWT Session**: Session protection relies on HMAC SHA-256 signatures validated against a server-side environment secret. Forged, tampered, or expired tokens are immediately rejected.
-- **HttpOnly Cookies**: Session cookies are stored as `HttpOnly`, `Secure` (in production), and `SameSite=Lax` to enforce browser security constraints against XSS and CSRF.
+> `ARCHITECTURE.md`, `DATABASE.md`, `SECURITY.md` and `API.md` predate the recent auth, database and vehicle changes and may be out of date; `docs/decisions.md` is current. Consolidating them is plan task 9.5.

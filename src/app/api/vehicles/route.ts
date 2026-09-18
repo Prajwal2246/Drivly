@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { verifyJwt } from '@/lib/auth';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
+import { getSession } from '@/lib/session';
+import { vehicleSchema } from '@/lib/validations';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = req.cookies.get('user_session')?.value;
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-    const userPayload = verifyJwt(session, secret);
+    const userPayload = await getSession(req);
 
     if (!userPayload) {
       return apiError('UNAUTHORIZED', 'Unauthorized');
@@ -18,15 +17,16 @@ export async function GET(req: NextRequest) {
     const vehicles = await prisma.vehicle.findMany({
       where: {
         owner: {
-          societyName: userPayload.society,
+          societyId: userPayload.societyId,
         },
+        listed: true,
       },
       include: {
         owner: {
           select: {
             name: true,
             phone: true,
-            societyName: true,
+            society: { select: { name: true } },
           },
         },
       },
@@ -44,30 +44,24 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = req.cookies.get('user_session')?.value;
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-    const userPayload = verifyJwt(session, secret);
+    const userPayload = await getSession(req);
 
     if (!userPayload) {
       return apiError('UNAUTHORIZED', 'Unauthorized');
     }
 
-    const { type, brand, model, year, colorHex, pricePerHour } = await req.json();
+    // The /dashboard/list-vehicle page hides the form from renters; the API has to enforce it too.
+    if (userPayload.role === 'RENTER') {
+      return apiError('FORBIDDEN', 'Renter accounts cannot list vehicles. Switch to Owner or Both in your profile.');
+    }
 
-    if (!type || !brand || !model || !year || !pricePerHour) {
-      return apiError('BAD_REQUEST', 'Missing required parameters.');
+    const result = vehicleSchema.safeParse(await req.json());
+    if (!result.success) {
+      return apiError('VALIDATION_ERROR', result.error.issues[0].message);
     }
 
     const newVehicle = await prisma.vehicle.create({
-      data: {
-        ownerId: userPayload.userId,
-        type,
-        brand,
-        model,
-        year: parseInt(year),
-        colorHex: colorHex || '#000000',
-        pricePerHour: parseFloat(pricePerHour),
-      },
+      data: { ...result.data, ownerId: userPayload.userId },
     });
 
     Logger.info('vehicle_listed', { vehicleId: newVehicle.id, ownerId: userPayload.userId, brand: newVehicle.brand, model: newVehicle.model });

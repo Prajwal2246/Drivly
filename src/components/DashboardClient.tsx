@@ -17,6 +17,7 @@ interface Vehicle {
   colorHex: string;
   pricePerHour: number;
   available: boolean;
+  listed: boolean;
 }
 
 interface Booking {
@@ -44,7 +45,7 @@ interface Booking {
   vehicle: Vehicle & {
     owner: { name: string; phone: string };
   };
-  renter: { name: string; phone: string; preVerifyDl: boolean; dlFileName: string | null };
+  renter: { name: string; phone: string; dlVerified: boolean; dlPath: string | null };
 }
 
 interface DashboardClientProps {
@@ -113,6 +114,45 @@ export default function DashboardClient({
     await fetch('/api/auth/logout', { method: 'POST' });
     router.refresh();
     router.push('/login');
+  };
+
+  // Owner listing controls (#014, #015). Errors come back as { error: { code, message } }.
+  const vehicleRequest = async (id: string, init: RequestInit, path = '') => {
+    const res = await fetch(`/api/vehicles/${id}${path}`, init);
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error?.message || 'Request failed.');
+    return data;
+  };
+
+  const handleToggleListed = async (vehicle: Vehicle) => {
+    try {
+      await vehicleRequest(vehicle.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ listed: !vehicle.listed }) });
+      setMyVehicles(prev => prev.map(v => v.id === vehicle.id ? { ...v, listed: !vehicle.listed } : v));
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicle: Vehicle) => {
+    if (!confirm(`Delete ${vehicle.brand} ${vehicle.model}? This cannot be undone.`)) return;
+    try {
+      await vehicleRequest(vehicle.id, { method: 'DELETE' });
+      setMyVehicles(prev => prev.filter(v => v.id !== vehicle.id));
+    } catch (err: any) {
+      alert(err.message); // 409 when it has bookings: unlist instead
+    }
+  };
+
+  const handleVehiclePhoto = async (vehicle: Vehicle, file: File | undefined) => {
+    if (!file) return;
+    const body = new FormData();
+    body.append('file', file);
+    try {
+      await vehicleRequest(vehicle.id, { method: 'POST', body }, '/photo');
+      alert('Photo updated.');
+    } catch (err: any) {
+      alert(err.message);
+    }
   };
 
   // Add a new vehicle
@@ -608,13 +648,25 @@ export default function DashboardClient({
                               <span className="text-[10px] text-zinc-400 font-mono">{vehicle.type} • {vehicle.year}</span>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right space-y-1.5">
                             <span className="font-bold text-sm block">₹{vehicle.pricePerHour}/hr</span>
                             <span className={`text-[8.5px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                              vehicle.available ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                              !vehicle.listed ? 'bg-zinc-100 text-zinc-500' : vehicle.available ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                             }`}>
-                              {vehicle.available ? 'Available' : 'Rented'}
+                              {!vehicle.listed ? 'Unlisted' : vehicle.available ? 'Available' : 'Rented'}
                             </span>
+                            <div className="flex gap-1.5 justify-end text-[10px] font-bold">
+                              <label className="px-2 py-1 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 cursor-pointer">
+                                Photo
+                                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleVehiclePhoto(vehicle, e.target.files?.[0])} />
+                              </label>
+                              <button onClick={() => handleToggleListed(vehicle)} className="px-2 py-1 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 cursor-pointer">
+                                {vehicle.listed ? 'Unlist' : 'Relist'}
+                              </button>
+                              <button onClick={() => handleDeleteVehicle(vehicle)} className="px-2 py-1 rounded-lg border border-red-200 text-red-600 bg-white hover:bg-red-50 cursor-pointer">
+                                Delete
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -648,12 +700,15 @@ export default function DashboardClient({
                         </p>
                         
                         {/* Driver license badge */}
-                        {b.renter.preVerifyDl && (
+                        {b.renter.dlVerified ? (
                           <div className="mt-3 inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-bold border border-emerald-100">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            DL Pre-Verified ({b.renter.dlFileName})
+                            <ShieldCheck className="w-3.5 h-3.5" /> DL Verified
                           </div>
-                        )}
+                        ) : b.renter.dlPath ? (
+                          <div className="mt-3 inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[9px] font-bold border border-amber-100">
+                            DL uploaded, pending review
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-100">

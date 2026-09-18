@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { verifyJwt } from '@/lib/auth';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
-import { checkPastDate, checkOwnerBooking } from '@/lib/booking-rules';
+import { checkPastDate, checkOwnerBooking, createBookingIfFree } from '@/lib/booking-rules';
+import { getSession } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = req.cookies.get('user_session')?.value;
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-    const userPayload = verifyJwt(session, secret);
+    const userPayload = await getSession(req);
 
     if (!userPayload) {
       return apiError('UNAUTHORIZED', 'Unauthorized');
@@ -39,7 +37,7 @@ export async function GET(req: NextRequest) {
       },
       include: {
         renter: {
-          select: { name: true, phone: true, preVerifyDl: true, dlFileName: true },
+          select: { name: true, phone: true, dlVerified: true, dlPath: true },
         },
         vehicle: true,
       },
@@ -59,9 +57,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = req.cookies.get('user_session')?.value;
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-    const userPayload = verifyJwt(session, secret);
+    const userPayload = await getSession(req);
 
     if (!userPayload) {
       return apiError('UNAUTHORIZED', 'Unauthorized');
@@ -84,10 +80,12 @@ export async function POST(req: NextRequest) {
 
     // Fetch the vehicle to verify existence and ownership
     const vehicle = await prisma.vehicle.findUnique({
-      where: { id: vehicleId }
+      where: { id: vehicleId },
+      include: { owner: { select: { societyId: true } } },
     });
 
-    if (!vehicle) {
+    // Same 404 for other-society and unlisted vehicles: don't confirm they exist.
+    if (!vehicle || vehicle.owner.societyId !== userPayload.societyId || !vehicle.listed) {
       return apiError('NOT_FOUND', 'Vehicle not found.');
     }
 
@@ -97,34 +95,18 @@ export async function POST(req: NextRequest) {
       return apiError('BAD_REQUEST', ownerErr);
     }
 
-    // 3. Block overlapping bookings for the same vehicle
-    const overlap = await prisma.booking.findFirst({
-      where: {
-        vehicleId,
-        status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] },
-        OR: [
-          {
-            startTime: { lte: end },
-            endTime: { gte: start }
-          }
-        ]
-      }
+    // 3. Block overlapping bookings for the same vehicle (race-safe)
+    const newBooking = await createBookingIfFree(prisma, {
+      renterId: userPayload.userId,
+      vehicleId,
+      start,
+      end,
+      totalCost: parseFloat(totalCost), // ponytail: client-supplied price — task 4.3 computes it server-side
     });
 
-    if (overlap) {
+    if (!newBooking) {
       return apiError('CONFLICT', 'This vehicle is already booked during the selected times.');
     }
-
-    const newBooking = await prisma.booking.create({
-      data: {
-        renterId: userPayload.userId,
-        vehicleId,
-        startTime: start,
-        endTime: end,
-        status: 'PENDING',
-        totalCost: parseFloat(totalCost),
-      },
-    });
 
     Logger.info('booking_requested', { bookingId: newBooking.id, renterId: userPayload.userId, vehicleId });
 

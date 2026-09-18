@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { verifyJwt, signJwt } from '@/lib/auth';
 import { z } from 'zod';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
+import { getSession, signSession, SESSION_COOKIE } from '@/lib/session';
 
 const profileUpdateSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
-  city: z.string().min(2, { message: 'City must be at least 2 characters.' }),
-  societyName: z.string().min(2, { message: 'Society name must be at least 2 characters.' }),
+  city: z.string().trim().min(2, { message: 'City must be at least 2 characters.' }),
+  societyName: z.string().trim().min(2, { message: 'Society name must be at least 2 characters.' }),
   role: z.enum(['OWNER', 'RENTER', 'BOTH'], { message: 'Please select a valid role.' }),
 });
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = req.cookies.get('user_session')?.value;
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-    const userPayload = verifyJwt(session, secret);
+    const userPayload = await getSession(req);
 
     if (!userPayload) {
       return apiError('UNAUTHORIZED', 'Unauthorized');
@@ -51,23 +49,14 @@ export async function PATCH(req: NextRequest) {
       data: {
         name,
         email,
-        city,
-        societyName,
         role,
-      }
+        society: { connectOrCreate: { where: { name_city: { name: societyName, city } }, create: { name: societyName, city } } },
+      },
+      include: { society: true },
     });
 
     // Re-sign session JWT with updated claims
-    const token = signJwt(
-      {
-        userId: updatedUser.id,
-        name: updatedUser.name,
-        role: updatedUser.role,
-        society: updatedUser.societyName,
-        exp: Date.now() + 1000 * 60 * 60 * 24,
-      },
-      secret
-    );
+    const token = signSession({ userId: updatedUser.id, name: updatedUser.name, role: updatedUser.role, societyId: updatedUser.societyId, society: updatedUser.society.name });
 
     const response = NextResponse.json({
       success: true,
@@ -77,13 +66,13 @@ export async function PATCH(req: NextRequest) {
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
-        society: updatedUser.societyName,
-        city: updatedUser.city,
+        society: updatedUser.society.name,
+        city: updatedUser.society.city,
       }
     });
 
     // Reset user_session cookie
-    response.cookies.set('user_session', token, {
+    response.cookies.set(SESSION_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

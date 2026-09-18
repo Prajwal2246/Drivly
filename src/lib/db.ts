@@ -1,30 +1,15 @@
-import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { DATABASE_URL } from '@/lib/env';
+
+// Route handlers return Prisma rows through NextResponse.json. Decimal's default toJSON is a string ("180"),
+// which clients would concatenate (`sum + b.totalCost`). Money math that persists stays in Decimal. See #010.
+(Prisma.Decimal.prototype as { toJSON(): unknown }).toJSON = function (this: Prisma.Decimal) { return this.toNumber(); };
 
 const prismaClientSingleton = () => {
-  const rawUrls = [
-    process.env.POSTGRES_PRISMA_URL,
-    process.env.POSTGRES_URL_NON_POOLING,
-    process.env.SUPABASE_DATABASE_URL,
-    process.env.DATABASE_URL,
-  ].filter(Boolean) as string[];
-
-  // Prefer IPv4 pooler connection strings (containing pooler or port 6543) over IPv6-only direct hosts
-  const connectionString = 
-    rawUrls.find(url => url.includes('pooler') || url.includes(':6543')) || 
-    rawUrls[0] || 
-    'postgresql://localhost:5432/parkshare';
-
-  const isRemote = 
-    process.env.NODE_ENV === 'production' || 
-    Boolean(connectionString && !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1'));
-
-  const pool = new Pool({ 
-    connectionString,
-    ssl: isRemote ? { rejectUnauthorized: false } : undefined
-  });
-  const adapter = new PrismaPg(pool);
+  const local = ['localhost', '127.0.0.1'].includes(new URL(DATABASE_URL).hostname);
+  // ponytail: TLS without cert verification — Supabase's CA isn't in Node's store. Upgrade: pass its CA as `ssl.ca`.
+  const adapter = new PrismaPg({ connectionString: DATABASE_URL, ssl: local ? undefined : { rejectUnauthorized: false } });
   return new PrismaClient({ adapter });
 };
 

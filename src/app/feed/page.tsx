@@ -1,17 +1,14 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { verifyJwt } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import FeedClient from '@/components/FeedClient';
 import EmptyState from '@/components/EmptyState';
+import { getSession } from '@/lib/session';
+import { vehiclePhotoUrl } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
 
 export default async function FeedPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('user_session')?.value;
-  const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-  const user = verifyJwt(token, secret);
+  const user = await getSession();
 
   if (!user) {
     redirect('/login');
@@ -21,15 +18,15 @@ export default async function FeedPage() {
   const vehicles = await prisma.vehicle.findMany({
     where: {
       owner: {
-        societyName: user.society,
+        societyId: user.societyId,
       },
+      listed: true,
     },
     include: {
       owner: {
         select: {
           name: true,
           phone: true,
-          societyName: true,
         },
       },
     },
@@ -67,6 +64,8 @@ export default async function FeedPage() {
   // Serialize models into JSON‑safe payloads (date strings)
   const serializedVehicles = vehicles.map(v => ({
     ...v,
+    pricePerHour: v.pricePerHour.toNumber(), // Decimal can't cross the RSC boundary
+    photoUrl: vehiclePhotoUrl(v.photoPath),
     createdAt: v.createdAt.toISOString(),
   })) as any;
 

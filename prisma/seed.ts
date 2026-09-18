@@ -1,13 +1,7 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+import type { VehicleType } from '@prisma/client';
+import { prisma } from '../src/lib/db';
 import { hashPassword } from '../src/lib/auth';
-
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 
 async function main() {
   try {
@@ -15,9 +9,11 @@ async function main() {
     await prisma.booking.deleteMany();
     await prisma.vehicle.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.society.deleteMany();
 
     console.log('Seeding demo sandbox users...');
     const demoPasswordHash = hashPassword('demo123');
+    const society = await prisma.society.create({ data: { name: 'Greenwood Heights', city: 'Mumbai' } });
 
     // Create Demo Renter
     const renter = await prisma.user.create({
@@ -25,12 +21,10 @@ async function main() {
         name: 'Demo Renter',
         phone: '5550001111',
         email: 'renter@drivly.demo',
-        city: 'Mumbai',
-        societyName: 'Greenwood Heights',
+        societyId: society.id,
         role: 'RENTER',
         password: demoPasswordHash,
-        preVerifyDl: true,
-        dlFileName: 'demo_license.pdf',
+        dlVerified: true,
       },
     });
 
@@ -40,15 +34,14 @@ async function main() {
         name: 'Demo Owner',
         phone: '5550002222',
         email: 'owner@drivly.demo',
-        city: 'Mumbai',
-        societyName: 'Greenwood Heights',
+        societyId: society.id,
         role: 'OWNER',
         password: demoPasswordHash,
       },
     });
 
     console.log('Seeding 6 realistic vehicles tied to Demo Owner...');
-    const vehiclesData = [
+    const vehiclesData: { type: VehicleType; brand: string; model: string; year: number; colorHex: string; pricePerHour: number }[] = [
       {
         type: 'CAR',
         brand: 'Honda',
@@ -115,7 +108,6 @@ async function main() {
     process.exit(1);
   } finally {
     await prisma.$disconnect();
-    await pool.end();
   }
 }
 

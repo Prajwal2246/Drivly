@@ -1,5 +1,7 @@
 import assert from 'node:assert';
-import { signJwt, verifyJwt } from '../src/lib/auth';
+import { signJwt, verifyJwt, hashPassword, verifyPassword } from '../src/lib/auth';
+import { rateLimit } from '../src/lib/rate-limit';
+import { validateUpload, DL_EXT, PHOTO_EXT, vehicleSchema, vehicleUpdateSchema } from '../src/lib/validations';
 import { checkPastDate, checkOwnerBooking, checkOverlap } from '../src/lib/booking-rules';
 
 async function runTests() {
@@ -43,6 +45,44 @@ async function runTests() {
   const mismatchedDecoded = verifyJwt(validToken, wrongSecret);
   assert.strictEqual(mismatchedDecoded, null, 'JWT verification with incorrect key should verify to null');
   console.log('✅ JWT Signature Key Verification: OK');
+
+  // Password hashing (scrypt) — see docs/decisions.md #002
+  const stored = hashPassword('hunter2');
+  assert.ok(verifyPassword('hunter2', stored), 'Correct password should verify');
+  assert.ok(!verifyPassword('hunter3', stored), 'Wrong password should fail');
+  assert.ok(!verifyPassword('hunter2', 'garbage'), 'Malformed hash should fail, not throw');
+  assert.notStrictEqual(hashPassword('hunter2'), stored, 'Salt must differ per hash');
+  console.log('✅ Password Hash & Verify: OK');
+
+  // Rate limiter — see docs/decisions.md #005
+  const t0 = 1_000_000;
+  for (let i = 0; i < 3; i++) assert.ok(rateLimit('ip1', 3, 1000, t0), `attempt ${i + 1} within limit`);
+  assert.ok(!rateLimit('ip1', 3, 1000, t0), '4th attempt is blocked');
+  assert.ok(rateLimit('ip2', 3, 1000, t0), 'other key is independent');
+  assert.ok(rateLimit('ip1', 3, 1000, t0 + 1000), 'window resets after windowMs');
+  console.log('✅ Rate Limiter: OK');
+
+  // DL upload validator — see docs/decisions.md #006
+  assert.strictEqual(validateUpload('image/jpeg', 1024, DL_EXT), null, 'JPEG under limit is accepted');
+  assert.strictEqual(validateUpload('application/pdf', 4 * 1024 * 1024, DL_EXT), null, 'Exactly 4MB is accepted');
+  assert.ok(validateUpload('image/jpeg', 4 * 1024 * 1024 + 1, DL_EXT), 'Over 4MB is rejected');
+  assert.ok(validateUpload('text/html', 10, DL_EXT), 'Non-image/PDF mime is rejected');
+  assert.ok(validateUpload('image/jpeg', 0, DL_EXT), 'Empty file is rejected');
+  assert.ok(validateUpload('application/pdf', 1024, PHOTO_EXT), 'Vehicle photos reject PDF');
+  console.log('✅ Upload Validator: OK');
+
+  // Vehicle schema — see docs/decisions.md #013
+  const car = { type: 'CAR', brand: ' Honda ', model: 'City', year: '2020', pricePerHour: '150' };
+  const parsed = vehicleSchema.parse(car);
+  assert.strictEqual(parsed.brand, 'Honda', 'brand is trimmed');
+  assert.strictEqual(parsed.year, 2020, 'year is coerced from form string');
+  assert.strictEqual(parsed.colorHex, '#000000', 'colour defaults');
+  assert.ok(!vehicleSchema.safeParse({ ...car, type: 'BOAT' }).success, 'unknown type rejected');
+  assert.ok(!vehicleSchema.safeParse({ ...car, pricePerHour: 0 }).success, 'zero price rejected');
+  assert.ok(!vehicleSchema.safeParse({ ...car, colorHex: 'red' }).success, 'non-hex colour rejected');
+  assert.ok(vehicleUpdateSchema.safeParse({ listed: false }).success, 'partial update with only listed is valid');
+  assert.ok(!vehicleUpdateSchema.safeParse({ listed: 'no' }).success, 'listed must be boolean');
+  console.log('✅ Vehicle Schema: OK');
 
   // ==========================================
   // 2. INTEGRATION TESTS: BOOKING RULES

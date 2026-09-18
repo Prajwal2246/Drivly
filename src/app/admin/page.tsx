@@ -13,13 +13,18 @@ export default async function AdminPage() {
       orderBy: { createdAt: 'desc' },
     })) as UserWaitlist[];
 
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, phone: true, society: { select: { name: true } }, role: true, dlPath: true, dlVerified: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
     // Serialize Date objects to strings so they can be passed to the client component
     const serializedData: SerializedWaitlist[] = registrations.map((entry) => ({
       ...entry,
       createdAt: entry.createdAt.toISOString(),
     }));
 
-    return <AdminDashboardClient initialData={serializedData} />;
+    return <AdminDashboardClient initialData={serializedData} users={users.map(({ society, ...u }) => ({ ...u, societyName: society.name }))} />;
   } catch (error) {
     console.error('Error fetching waitlist registrations:', error);
     return (

@@ -9,6 +9,7 @@ interface VehicleCardProps {
   model: string;
   type?: string; // 'CAR' | 'BIKE' | 'OTHER'
   colorHex: string;
+  photoUrl?: string | null;
   contribution: number;
   isAvailable: boolean;
   onRequest?: () => void;
@@ -20,6 +21,7 @@ export default function VehicleCard({
   model,
   type = 'CAR',
   colorHex,
+  photoUrl,
   contribution,
   isAvailable,
   onRequest,
@@ -77,7 +79,10 @@ export default function VehicleCard({
           className="absolute w-44 h-44 rounded-full opacity-[0.05] blur-3xl pointer-events-none transition-all duration-500 group-hover:scale-125"
         />
 
-        {/* Vehicle Image */}
+        {/* Vehicle Image: owner's photo, else type silhouette */}
+        {photoUrl ? (
+          <img src={photoUrl} alt={`${brand} ${model}`} loading="lazy" className="w-full h-full object-cover select-none" />
+        ) : (
         <img 
           src={
             isScooter 
@@ -93,6 +98,7 @@ export default function VehicleCard({
           alt={`${brand} ${model}`}
           className="w-full h-full object-contain object-bottom scale-[1.08] translate-y-4 transition-transform duration-500 ease-out group-hover:scale-[1.12] group-hover:translate-y-4 select-none mix-blend-multiply"
         />
+        )}
       </div>
 
       {/* Header Info Overlay (Top) */}

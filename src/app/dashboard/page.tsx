@@ -1,16 +1,21 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { verifyJwt } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import DashboardClient from '@/components/DashboardClient';
+import { getSession } from '@/lib/session';
+import type { Booking } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
+// Decimal can't cross the RSC boundary; display-only, so number is fine here.
+const moneyToNumbers = (b: Booking) => ({
+  totalCost: b.totalCost.toNumber(),
+  depositAmount: b.depositAmount.toNumber(),
+  refundAmount: b.refundAmount.toNumber(),
+  challanPenalty: b.challanPenalty.toNumber(),
+});
+
 export default async function DashboardPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('user_session')?.value;
-  const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-  const user = verifyJwt(token, secret);
+  const user = await getSession();
 
   if (!user) {
     redirect('/login');
@@ -43,8 +48,8 @@ export default async function DashboardPage() {
         select: { 
           name: true, 
           phone: true, 
-          preVerifyDl: true, 
-          dlFileName: true 
+          dlVerified: true,
+          dlPath: true,
         },
       },
       vehicle: true,
@@ -61,28 +66,33 @@ export default async function DashboardPage() {
   // Serialize date strings for JSON client safety
   const serializedRenterBookings = renterBookings.map(b => ({
     ...b,
+    ...moneyToNumbers(b),
     createdAt: b.createdAt.toISOString(),
     startTime: b.startTime.toISOString(),
     endTime: b.endTime.toISOString(),
     vehicle: {
       ...b.vehicle,
+      pricePerHour: b.vehicle.pricePerHour.toNumber(),
       createdAt: b.vehicle.createdAt.toISOString(),
     },
   })) as any;
 
   const serializedOwnerBookings = ownerBookings.map(b => ({
     ...b,
+    ...moneyToNumbers(b),
     createdAt: b.createdAt.toISOString(),
     startTime: b.startTime.toISOString(),
     endTime: b.endTime.toISOString(),
     vehicle: {
       ...b.vehicle,
+      pricePerHour: b.vehicle.pricePerHour.toNumber(),
       createdAt: b.vehicle.createdAt.toISOString(),
     },
   })) as any;
 
   const serializedMyVehicles = myVehicles.map(v => ({
     ...v,
+    pricePerHour: v.pricePerHour.toNumber(),
     createdAt: v.createdAt.toISOString(),
   })) as any;
 

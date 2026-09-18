@@ -1,16 +1,12 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { verifyJwt } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import ProfileClient from '@/components/ProfileClient';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('user_session')?.value;
-  const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-  const user = verifyJwt(token, secret);
+  const user = await getSession();
 
   if (!user) {
     redirect('/login');
@@ -24,9 +20,10 @@ export default async function ProfilePage() {
       name: true,
       email: true,
       phone: true,
-      city: true,
-      societyName: true,
+      society: { select: { name: true, city: true } },
       role: true,
+      dlPath: true,
+      dlVerified: true,
     },
   });
 
@@ -34,5 +31,6 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  return <ProfileClient initialUser={fullUser} />;
+  const { society, ...rest } = fullUser;
+  return <ProfileClient initialUser={{ ...rest, city: society.city, societyName: society.name }} />;
 }

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { verifyJwt } from '@/lib/auth';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
+import { getSession } from '@/lib/session';
+import { BookingStatus, Prisma } from '@prisma/client';
+
+// ponytail: mock deposit hold amount until Razorpay (task 5.1)
+const MOCK_DEPOSIT = new Prisma.Decimal(5000);
 
 export async function PATCH(
   req: NextRequest,
@@ -10,9 +14,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const session = req.cookies.get('user_session')?.value;
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
-    const userPayload = verifyJwt(session, secret);
+    const userPayload = await getSession(req);
 
     if (!userPayload) {
       return apiError('UNAUTHORIZED', 'Unauthorized');
@@ -50,6 +52,10 @@ export async function PATCH(
 
     // 1. Status transition validations
     if (status) {
+      if (!Object.hasOwn(BookingStatus, status)) { // not `in`: 'toString' in BookingStatus is true
+        return apiError('BAD_REQUEST', 'Invalid booking status.');
+      }
+
       // Security check: Only owner can approve/reject
       if ((status === 'APPROVED' || status === 'REJECTED') && !isOwner) {
         return apiError('FORBIDDEN', 'Unauthorized to approve/reject this booking.');
@@ -65,7 +71,7 @@ export async function PATCH(
       if (status === 'APPROVED') {
         // ponytail: mock authorize deposit hold of 5000.0 on approval
         updateData.paymentStatus = 'HELD';
-        updateData.depositAmount = 5000.0;
+        updateData.depositAmount = MOCK_DEPOSIT;
       }
 
       if (status === 'ACTIVE' && odometerStart !== undefined) {
@@ -89,9 +95,10 @@ export async function PATCH(
 
         // Resolve deposit holds & rent payments
         updateData.paymentStatus = 'PAID';
-        const finalPenalty = booking.challanPenalty || 0.0;
-        updateData.refundAmount = Math.max(0.0, (booking.depositAmount || 5000.0) - finalPenalty);
-        if (finalPenalty > 0) {
+        const finalPenalty = booking.challanPenalty;
+        const deposit = booking.depositAmount.isZero() ? MOCK_DEPOSIT : booking.depositAmount;
+        updateData.refundAmount = Prisma.Decimal.max(0, deposit.minus(finalPenalty));
+        if (finalPenalty.greaterThan(0)) {
           updateData.challanStatus = 'DEDUCTED';
         }
       }
@@ -125,15 +132,18 @@ export async function PATCH(
       if (!isOwner) {
         return apiError('FORBIDDEN', 'Only vehicle owner can log traffic challans.');
       }
-      const penalty = parseFloat(challanPenalty);
+      const penalty = Number(challanPenalty);
+      if (!Number.isFinite(penalty) || penalty < 0) {
+        return apiError('BAD_REQUEST', 'Challan penalty must be a non-negative number.');
+      }
       updateData.challanPenalty = penalty;
       updateData.challanReason = challanReason || 'Traffic violation reported';
       updateData.challanStatus = 'PENDING';
 
       // If the booking is already completed, deduct immediately and recalculate refund
       if (booking.status === 'COMPLETED') {
-        const deposit = booking.depositAmount || 5000.0;
-        updateData.refundAmount = Math.max(0.0, deposit - penalty);
+        const deposit = booking.depositAmount.isZero() ? MOCK_DEPOSIT : booking.depositAmount;
+        updateData.refundAmount = Prisma.Decimal.max(0, deposit.minus(penalty));
         updateData.challanStatus = 'DEDUCTED';
       }
     }

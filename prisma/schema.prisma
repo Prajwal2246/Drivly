@@ -6,6 +6,43 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  RENTER
+  OWNER
+  BOTH
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+  OTHER
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  HELD
+  PAID
+  REFUNDED
+}
+
+enum ChallanStatus {
+  NONE
+  PENDING
+  PAID
+  DEDUCTED
+  DISPUTED
+}
+
+// ponytail: waitlist stays free-text strings — it's a signup survey, not tenancy/money. See docs/decisions.md #007.
 model UserWaitlist {
   id                  String   @id @default(uuid())
   name                String
@@ -13,12 +50,12 @@ model UserWaitlist {
   email               String
   city                String
   societyName         String
-  role                String   // 'OWNER' | 'RENTER' | 'BOTH'
-  vehicleType         String?  // 'CAR' | 'BIKE' | 'OTHER' (optional)
-  brand               String?  // (optional)
-  model               String?  // (optional)
-  year                Int?     // (optional)
-  expectedRentalPrice Float?   // (optional)
+  role                String // 'OWNER' | 'RENTER' | 'BOTH'
+  vehicleType         String? // 'CAR' | 'BIKE' | 'OTHER' (optional)
+  brand               String? // (optional)
+  model               String? // (optional)
+  year                Int? // (optional)
+  expectedRentalPrice Float? // (optional)
   preVerifyDl         Boolean  @default(false)
   dlFileName          String?
   createdAt           DateTime @default(now())
@@ -26,74 +63,91 @@ model UserWaitlist {
   @@map("user_waitlist")
 }
 
+// Tenant boundary: users only see vehicles from their own society. See docs/decisions.md #009.
+model Society {
+  id        String   @id @default(uuid())
+  name      String
+  city      String
+  createdAt DateTime @default(now())
+
+  users User[]
+
+  @@unique([name, city])
+  @@map("societies")
+}
+
 model User {
-  id          String   @id @default(uuid())
-  name        String
-  phone       String   @unique
-  email       String   @unique
-  city        String
-  societyName String
-  role        String   // 'RENTER' | 'OWNER' | 'BOTH'
-  password    String   // hashed password
-  preVerifyDl Boolean  @default(false)
-  dlFileName  String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  name       String
+  phone      String   @unique
+  email      String   @unique
+  societyId  String
+  role       Role
+  password   String // hashed password
+  dlPath     String? // Supabase Storage key in the private `dl` bucket; null = not uploaded
+  dlVerified Boolean  @default(false) // set by admin only
+  createdAt  DateTime @default(now())
 
-  vehicles    Vehicle[]
-  bookings    Booking[] @relation("RenterBookings")
+  society  Society   @relation(fields: [societyId], references: [id], onDelete: Restrict)
+  vehicles Vehicle[]
+  bookings Booking[] @relation("RenterBookings")
 
+  @@index([societyId])
   @@map("users")
 }
 
 model Vehicle {
-  id           String   @id @default(uuid())
+  id           String      @id @default(uuid())
   ownerId      String
-  type         String   // 'CAR' | 'BIKE' | 'OTHER'
+  type         VehicleType
   brand        String
   model        String
   year         Int
-  colorHex     String   @default("#000000") // used for dynamic silhouettes
-  pricePerHour Float
-  available    Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  colorHex     String      @default("#000000") // used for dynamic silhouettes
+  pricePerHour Decimal     @db.Decimal(10, 2)
+  available    Boolean     @default(true)
+  listed       Boolean  @default(true) // owner's choice; `available` is trip state. See docs/decisions.md #014
+  photoPath    String?  // key in the public `vehicles` bucket; null = silhouette
+  createdAt    DateTime    @default(now())
 
-  owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  bookings     Booking[]
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  bookings Booking[]
 
+  @@index([ownerId])
   @@map("vehicles")
 }
 
 model Booking {
-  id           String   @id @default(uuid())
-  renterId     String
-  vehicleId    String
-  startTime    DateTime
-  endTime      DateTime
-  status       String   // 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
-  totalCost    Float
+  id            String        @id @default(uuid())
+  renterId      String
+  vehicleId     String
+  startTime     DateTime
+  endTime       DateTime
+  status        BookingStatus
+  totalCost     Decimal       @db.Decimal(10, 2)
   odometerStart Int?
   odometerEnd   Int?
-  notes        String?
-  createdAt    DateTime @default(now())
+  notes         String?
+  createdAt     DateTime      @default(now())
 
-  // paymentStatus: 'PENDING' | 'HELD' | 'PAID' | 'REFUNDED'
-  paymentStatus String  @default("PENDING")
-  depositAmount Float   @default(0.0)
-  refundAmount  Float   @default(0.0)
+  paymentStatus PaymentStatus @default(PENDING)
+  depositAmount Decimal       @default(0) @db.Decimal(10, 2)
+  refundAmount  Decimal       @default(0) @db.Decimal(10, 2)
 
-  // challanStatus: 'NONE' | 'PENDING' | 'PAID' | 'DEDUCTED' | 'DISPUTED'
-  challanPenalty Float  @default(0.0)
+  challanPenalty Decimal       @default(0) @db.Decimal(10, 2)
   challanReason  String?
-  challanStatus  String @default("NONE")
+  challanStatus  ChallanStatus @default(NONE)
 
   // Mutual review ratings (1-5)
-  ownerRating   Int?    // Rating given by Renter to Vehicle/Owner
-  ownerReview   String? // Review given by Renter to Owner
-  renterRating  Int?    // Rating given by Owner to Renter
-  renterReview  String? // Review given by Owner to Renter
+  ownerRating  Int? // Rating given by Renter to Vehicle/Owner
+  ownerReview  String? // Review given by Renter to Owner
+  renterRating Int? // Rating given by Owner to Renter
+  renterReview String? // Review given by Owner to Renter
 
-  renter       User     @relation("RenterBookings", fields: [renterId], references: [id], onDelete: Cascade)
-  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  renter  User    @relation("RenterBookings", fields: [renterId], references: [id], onDelete: Cascade)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
+  @@index([vehicleId, startTime, endTime]) // overlap check + availability
+  @@index([renterId]) // "my rentals"
   @@map("bookings")
 }

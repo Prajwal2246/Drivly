@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, MapPin, Building, Shield, Loader2, AlertCircle, CheckCircle2, ArrowLeft, Car } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Building, Shield, Loader2, AlertCircle, CheckCircle2, ArrowLeft, Car, FileCheck } from 'lucide-react';
 
 interface ProfileClientProps {
   initialUser: {
@@ -13,6 +13,8 @@ interface ProfileClientProps {
     city: string;
     societyName: string;
     role: string;
+    dlPath: string | null;
+    dlVerified: boolean;
   };
 }
 
@@ -29,7 +31,30 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
+  const [dl, setDl] = useState({ path: initialUser.dlPath, verified: initialUser.dlVerified });
+  const [dlUploading, setDlUploading] = useState(false);
   const router = useRouter();
+
+  const handleDlUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDlUploading(true);
+    setError(null);
+    const body = new FormData();
+    body.append('file', file);
+    try {
+      const res = await fetch('/api/auth/profile/dl', { method: 'POST', body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Upload failed.');
+      setDl({ path: data.dlPath, verified: false });
+      setSuccessMsg('Driving licence uploaded. An admin will review it.');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setDlUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -189,6 +214,25 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               <p className="text-[10px] text-zinc-450 mt-1">
                 Changing your role to **Owner** or **Both** instantly unlocks the ability to list your vehicle in the society pool.
               </p>
+            </div>
+
+            {/* Driving licence */}
+            <div className="border-t border-zinc-100 pt-6">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">Driving Licence</label>
+              <div className="mt-1.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                  dl.verified ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                  : dl.path ? 'bg-amber-50 text-amber-700 border-amber-100'
+                  : 'bg-zinc-50 text-zinc-500 border-zinc-200'}`}>
+                  <FileCheck className="w-3.5 h-3.5" />
+                  {dl.verified ? 'Verified' : dl.path ? 'Uploaded — pending review' : 'Not uploaded'}
+                </span>
+                <label className="text-xs font-bold text-zinc-700 hover:text-zinc-900 cursor-pointer underline underline-offset-2">
+                  <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" onChange={handleDlUpload} disabled={dlUploading} />
+                  {dlUploading ? 'Uploading…' : dl.path ? 'Replace file' : 'Upload front of DL'}
+                </label>
+              </div>
+              <p className="text-[10px] text-zinc-450 mt-1">JPEG, PNG, WebP or PDF, max 4MB. Stored privately; only admins can view it. Re-uploading resets verification.</p>
             </div>
 
             {/* Actions */}

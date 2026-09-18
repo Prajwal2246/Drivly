@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { signJwt, hashPassword } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
+import { signSession, SESSION_COOKIE } from '@/lib/session';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { apiError } from '@/lib/errors';
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(`user-login:${clientIp(req)}`)) {
+    return apiError('TOO_MANY_REQUESTS', 'Too many login attempts. Try again in 15 minutes.');
+  }
   try {
     const { phone, society } = await req.json();
 
@@ -13,6 +19,7 @@ export async function POST(req: NextRequest) {
     // Find the user by phone number
     let user = await prisma.user.findUnique({
       where: { phone },
+      include: { society: true },
     });
 
     // Fail-safe auto-creation if seed hasn't been run
@@ -28,29 +35,23 @@ export async function POST(req: NextRequest) {
           name,
           phone,
           email,
-          city: 'Mumbai',
-          societyName: society || 'Greenwood Heights',
+          society: {
+            connectOrCreate: {
+              where: { name_city: { name: society?.trim() || 'Greenwood Heights', city: 'Mumbai' } },
+              create: { name: society?.trim() || 'Greenwood Heights', city: 'Mumbai' },
+            },
+          },
           role,
           password: demoPasswordHash,
-          preVerifyDl: !isOwner,
-          dlFileName: isOwner ? null : 'demo_license.pdf',
+          dlVerified: !isOwner,
         },
+        include: { society: true },
       });
     }
 
-    const secret = process.env.ADMIN_SESSION_SECRET || 'fallback-drivly-admin-session-secret-key-9988';
     
     // Sign session token (1 day expiration)
-    const token = signJwt(
-      {
-        userId: user.id,
-        name: user.name,
-        role: user.role,
-        society: user.societyName,
-        exp: Date.now() + 1000 * 60 * 60 * 24,
-      },
-      secret
-    );
+    const token = signSession({ userId: user.id, name: user.name, role: user.role, societyId: user.societyId, society: user.society.name });
 
     const response = NextResponse.json({
       success: true,
@@ -58,12 +59,12 @@ export async function POST(req: NextRequest) {
         id: user.id,
         name: user.name,
         role: user.role,
-        society: user.societyName,
+        society: user.society.name,
       },
     });
 
     // Set secure HTTP-only user_session cookie
-    response.cookies.set('user_session', token, {
+    response.cookies.set(SESSION_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
-import { checkPastDate, checkOwnerBooking, createBookingIfFree } from '@/lib/booking-rules';
+import { checkPastDate, checkOwnerBooking, createBookingIfFree, quoteBooking } from '@/lib/booking-rules';
 import { getSession } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
@@ -63,14 +63,11 @@ export async function POST(req: NextRequest) {
       return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     }
 
-    const { vehicleId, startTime, endTime, totalCost } = await req.json();
+    // Any price in the body is ignored: the server prices from the stored vehicle rate (#021).
+    const { vehicleId, startTime, endTime, notes } = await req.json();
 
     if (!vehicleId || !startTime || !endTime) {
       return apiError('BAD_REQUEST', 'Please choose a vehicle and a start and end time.');
-    }
-    if (totalCost === undefined) {
-      // ponytail: the vehicle page doesn't send totalCost; task 4.3 computes it server-side and removes this branch
-      return apiError('BAD_REQUEST', "Booking isn't available right now. Please try again later.");
     }
 
     const start = new Date(startTime);
@@ -99,20 +96,22 @@ export async function POST(req: NextRequest) {
       return apiError('BAD_REQUEST', ownerErr);
     }
 
-    // 3. Block overlapping bookings for the same vehicle (race-safe)
+    // 3. Price from the stored rate, then block overlaps (race-safe)
+    const quote = quoteBooking(vehicle.pricePerHour.toNumber(), vehicle.type, start, end);
     const newBooking = await createBookingIfFree(prisma, {
       renterId: userPayload.userId,
       vehicleId,
       start,
       end,
-      totalCost: parseFloat(totalCost), // ponytail: client-supplied price — task 4.3 computes it server-side
+      totalCost: quote.total,
+      notes: typeof notes === 'string' && notes.trim() ? notes.trim().slice(0, 500) : null,
     });
 
     if (!newBooking) {
       return apiError('CONFLICT', 'This vehicle is already booked during the selected times.');
     }
 
-    Logger.info('booking_requested', { bookingId: newBooking.id, renterId: userPayload.userId, vehicleId });
+    Logger.info('booking_requested', { bookingId: newBooking.id, renterId: userPayload.userId, vehicleId, total: quote.total });
 
     return NextResponse.json({ success: true, booking: newBooking });
   } catch (error) {

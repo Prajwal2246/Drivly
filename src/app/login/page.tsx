@@ -52,10 +52,10 @@ function LoginForm() {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null); // a 502 HTML page is not JSON
 
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed.');
+        throw new Error(data?.error?.message || (isLogin ? 'Couldn’t sign you in. Please try again.' : 'Couldn’t create your account. Please try again.'));
       }
 
       if (isLogin) {
@@ -74,21 +74,22 @@ function LoginForm() {
     }
   };
 
+  // Seeded demo accounts (prisma/seed.ts) through the normal password login — no passwordless path. See #017.
   const handleDemoLogin = async (phone: string) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/user-login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, society: 'Greenwood Heights' }),
+        body: JSON.stringify({ phone, password: 'demo123' }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Demo login failed.');
+        throw new Error(data?.error?.message || 'Demo login failed. Demo accounts exist only after `npx prisma db seed`.');
       }
 
       router.refresh();
@@ -138,8 +139,8 @@ function LoginForm() {
           </div>
 
           {error && (
-            <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 text-amber-800 p-4 rounded-xl mb-6 text-sm font-medium">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <div role="alert" className="flex items-center gap-3 bg-amber-50 border border-amber-100 text-amber-800 p-4 rounded-xl mb-6 text-sm font-medium">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" aria-hidden />
               <p>{error}</p>
             </div>
           )}

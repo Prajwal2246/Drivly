@@ -65,8 +65,12 @@ export async function POST(req: NextRequest) {
 
     const { vehicleId, startTime, endTime, totalCost } = await req.json();
 
-    if (!vehicleId || !startTime || !endTime || totalCost === undefined) {
+    if (!vehicleId || !startTime || !endTime) {
       return apiError('BAD_REQUEST', 'Please choose a vehicle and a start and end time.');
+    }
+    if (totalCost === undefined) {
+      // ponytail: the vehicle page doesn't send totalCost; task 4.3 computes it server-side and removes this branch
+      return apiError('BAD_REQUEST', "We couldn't price this booking. Please book from the feed for now.");
     }
 
     const start = new Date(startTime);

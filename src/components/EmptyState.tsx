@@ -13,7 +13,7 @@ export default function EmptyState({ societyName }: EmptyStateProps) {
   return (
     <div className="w-full bg-white border border-zinc-200 rounded-3xl p-12 text-center shadow-sm flex flex-col items-center justify-center space-y-5 select-none my-8">
       {/* Subtle large car icon */}
-      <div className="w-20 h-20 rounded-2xl bg-zinc-50 border border-zinc-150 flex items-center justify-center text-zinc-350 shadow-inner">
+      <div className="w-20 h-20 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-300 shadow-inner">
         <CarFront className="w-10 h-10 stroke-[1.5]" />
       </div>
 

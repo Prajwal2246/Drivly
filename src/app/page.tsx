@@ -120,7 +120,7 @@ export default function Home() {
               <div className="w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-700 flex items-center justify-center">
                 <Clock className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-zinc-955">95% Idle Time</h3>
+              <h3 className="text-lg font-bold text-zinc-950">95% Idle Time</h3>
               <p className="text-zinc-600 text-sm leading-relaxed">
                 Most personal vehicles sit unused in parking spots for over 28 days of the month, doing nothing but losing value.
               </p>
@@ -130,7 +130,7 @@ export default function Home() {
               <div className="w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-700 flex items-center justify-center">
                 <PiggyBank className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-zinc-955">Constant Expenses</h3>
+              <h3 className="text-lg font-bold text-zinc-950">Constant Expenses</h3>
               <p className="text-zinc-600 text-sm leading-relaxed">
                 Even when parked, owners continue paying heavy costs for EMI, insurance, society parking fees, and routine maintenance.
               </p>
@@ -140,7 +140,7 @@ export default function Home() {
               <div className="w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-700 flex items-center justify-center">
                 <Key className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-zinc-955">Under-Served Demand</h3>
+              <h3 className="text-lg font-bold text-zinc-950">Under-Served Demand</h3>
               <p className="text-zinc-600 text-sm leading-relaxed">
                 Neighbors and society residents frequently require access to vehicles for temporary work commutes, weekend trips, or errands.
               </p>
@@ -218,7 +218,7 @@ export default function Home() {
               <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-zinc-100/80 flex flex-col justify-between h-full gap-8">
                 <div>
                   <div className="flex justify-between items-start mb-8">
-                    <h3 className="text-lg font-black text-zinc-955 flex items-center gap-2">
+                    <h3 className="text-lg font-black text-zinc-950 flex items-center gap-2">
                       <span className="text-[10px] font-bold bg-zinc-100 border border-zinc-200 text-zinc-600 px-2 py-0.5 rounded-md uppercase tracking-wider">SOCIETY</span>
                       Renters
                     </h3>
@@ -274,7 +274,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20">
             <span className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Core Value</span>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-zinc-955 tracking-tight">
+            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-zinc-950 tracking-tight">
               Designed To Benefit Everyone
             </h2>
           </div>
@@ -300,7 +300,7 @@ export default function Home() {
                       </div>
                       <div>
                         <strong className="block text-zinc-950 font-bold text-base">{benefit.title}</strong>
-                        <span className="text-sm text-zinc-650 leading-relaxed mt-1.5 block">{benefit.desc}</span>
+                        <span className="text-sm text-zinc-700 leading-relaxed mt-1.5 block">{benefit.desc}</span>
                       </div>
                     </li>
                   );
@@ -327,8 +327,8 @@ export default function Home() {
                         <Icon className="w-4.5 h-4.5 text-zinc-800" />
                       </div>
                       <div>
-                        <strong className="block text-zinc-955 font-bold text-base">{benefit.title}</strong>
-                        <span className="text-sm text-zinc-650 leading-relaxed mt-1.5 block">{benefit.desc}</span>
+                        <strong className="block text-zinc-950 font-bold text-base">{benefit.title}</strong>
+                        <span className="text-sm text-zinc-700 leading-relaxed mt-1.5 block">{benefit.desc}</span>
                       </div>
                     </li>
                   );

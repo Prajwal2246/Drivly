@@ -56,7 +56,7 @@ export default function AdminLogin() {
           </span>
         </div>
         <h2 className="text-3xl font-extrabold text-zinc-950 tracking-tight font-sans">Admin Portal</h2>
-        <p className="mt-2 text-sm text-zinc-655 font-medium">
+        <p className="mt-2 text-sm text-zinc-700 font-medium">
           Enter password to access the waitlist registrations.
         </p>
       </div>
@@ -72,7 +72,7 @@ export default function AdminLogin() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-zinc-650">
+              <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-zinc-700">
                 Password
               </label>
               <div className="mt-2 relative">

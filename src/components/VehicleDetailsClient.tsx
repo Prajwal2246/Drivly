@@ -2,21 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  ArrowLeft, 
-  ShieldCheck, 
-  Key, 
-  Star, 
-  Calendar, 
-  Clock, 
-  User, 
-  Info, 
-  Gauge, 
-  Fuel, 
-  HeartHandshake
-} from 'lucide-react';
+import { ShieldCheck, Key, Star, Calendar, Clock, User, Info, Gauge, Fuel, HeartHandshake } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { quoteBooking } from '@/lib/booking-rules';
+import AppHeader from '@/components/ui/AppHeader';
 
 interface BookingSlot {
   id: string;
@@ -216,21 +205,7 @@ export default function VehicleDetailsClient({
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col pb-16">
       
       {/* 1. Sticky Navigation Bar */}
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between shadow-sm">
-        <button 
-          onClick={() => router.push('/feed')}
-          className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-150 rounded-xl text-xs font-black text-zinc-700 transition-colors border border-stone-200"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Feed
-        </button>
-        <div className="flex items-center gap-2 select-none">
-          <div className="w-8 h-8 rounded-lg bg-zinc-950 flex items-center justify-center text-white font-bold">
-            D
-          </div>
-          <span className="font-bold text-lg text-zinc-955 tracking-tight">{user.society} Hub</span>
-        </div>
-      </header>
+      <AppHeader name={user.name} society={user.society} />
 
       {/* 2. Main Content Grid */}
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex-grow">
@@ -246,7 +221,7 @@ export default function VehicleDetailsClient({
               <div className="flex justify-between items-start">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight leading-none">
-                    {vehicle.brand} <span className="font-semibold text-zinc-650">{vehicle.model}</span>
+                    {vehicle.brand} <span className="font-semibold text-zinc-700">{vehicle.model}</span>
                   </h1>
                   <div className="flex items-center gap-1.5 flex-wrap mt-2">
                     <span className="bg-[#FFF200] text-zinc-950 font-black text-[9px] px-1.5 py-0.5 rounded border border-[#E6B800] tracking-wider uppercase select-none">
@@ -299,13 +274,13 @@ export default function VehicleDetailsClient({
               {/* Verified Owner Widget */}
               <div className="flex items-center justify-between pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-zinc-150 flex items-center justify-center text-zinc-800 font-extrabold text-sm border border-zinc-200">
+                  <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-800 font-extrabold text-sm border border-zinc-200">
                     {vehicle.owner.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <span className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-wider block">Listed By Neighbor</span>
                     <span className="text-sm font-black text-zinc-900 leading-tight block">{vehicle.owner.name}</span>
-                    <span className="text-[10px] text-zinc-550 leading-tight block">{vehicle.owner.societyName}</span>
+                    <span className="text-[10px] text-zinc-600 leading-tight block">{vehicle.owner.societyName}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-bold bg-zinc-50 border border-zinc-200/50 rounded-xl px-3 py-1.5">
@@ -318,7 +293,7 @@ export default function VehicleDetailsClient({
             {/* Specifications checklist */}
             <div className="bg-white border border-stone-200/60 rounded-[2rem] p-6 shadow-sm">
               <h2 className="text-sm font-black text-zinc-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <Info className="w-4.5 h-4.5 text-zinc-450" />
+                <Info className="w-4.5 h-4.5 text-zinc-500" />
                 Vehicle Specifications
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -357,7 +332,7 @@ export default function VehicleDetailsClient({
             <div className="bg-white border border-stone-200/60 rounded-[2rem] p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-sm font-black text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Star className="w-4.5 h-4.5 text-zinc-450 fill-zinc-450" />
+                  <Star className="w-4.5 h-4.5 text-zinc-500 fill-zinc-500" />
                   Reviews from Neighbors
                 </h2>
                 {averageRating !== null && (
@@ -369,7 +344,7 @@ export default function VehicleDetailsClient({
               </div>
 
               {reviews.length === 0 ? (
-                <div className="text-center py-6 border border-dashed border-zinc-200 rounded-2xl text-zinc-450 text-xs">
+                <div className="text-center py-6 border border-dashed border-zinc-200 rounded-2xl text-zinc-500 text-xs">
                   No renter reviews recorded yet. Be the first to share!
                 </div>
               ) : (
@@ -385,7 +360,7 @@ export default function VehicleDetailsClient({
                         </div>
                       </div>
                       {r.review && (
-                        <p className="text-xs text-zinc-650 mt-1.5 italic leading-relaxed">
+                        <p className="text-xs text-zinc-700 mt-1.5 italic leading-relaxed">
                           "{r.review}"
                         </p>
                       )}
@@ -403,12 +378,12 @@ export default function VehicleDetailsClient({
             {/* Booking Form Widget */}
             <div className="bg-white border border-stone-200/60 rounded-[2rem] p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-black text-zinc-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Calendar className="w-4.5 h-4.5 text-zinc-450" />
+                <Calendar className="w-4.5 h-4.5 text-zinc-500" />
                 Reserve Vehicle
               </h2>
 
               {isOwner ? (
-                <div className="bg-zinc-50 border border-zinc-200/60 p-4 rounded-2xl text-zinc-550 text-xs leading-relaxed">
+                <div className="bg-zinc-50 border border-zinc-200/60 p-4 rounded-2xl text-zinc-600 text-xs leading-relaxed">
                   ℹ️ **Listing Owner Access**: This is your listed vehicle. You can manage bookings or block out maintenance slots in your Owner Dashboard.
                 </div>
               ) : (
@@ -519,12 +494,12 @@ export default function VehicleDetailsClient({
             {/* Reserved Timelines Visualizer Widget */}
             <div className="bg-white border border-stone-200/60 rounded-[2rem] p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-black text-zinc-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Clock className="w-4.5 h-4.5 text-zinc-450" />
+                <Clock className="w-4.5 h-4.5 text-zinc-500" />
                 Reserved Schedule Slots
               </h2>
 
               {vehicle.bookings.length === 0 ? (
-                <div className="text-center py-6 border border-dashed border-zinc-200 rounded-2xl text-zinc-450 text-xs">
+                <div className="text-center py-6 border border-dashed border-zinc-200 rounded-2xl text-zinc-500 text-xs">
                   No active reservations yet. All time slots are free!
                 </div>
               ) : (
@@ -535,7 +510,7 @@ export default function VehicleDetailsClient({
                     return (
                       <div 
                         key={b.id} 
-                        className="bg-zinc-50 border border-zinc-200/60 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-zinc-650"
+                        className="bg-zinc-50 border border-zinc-200/60 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-zinc-700"
                       >
                         <div className={`w-1.5 h-10 rounded-full flex-shrink-0 ${
                           b.status === 'APPROVED' ? 'bg-emerald-500' : 'bg-yellow-400'

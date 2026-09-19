@@ -145,12 +145,13 @@ Each phase ends with a **gate**: don't start the next phase until it passes. One
 2. **Verify Modules 1–3 on a real DB** — manual steps in `task_queue.md` (you), fix whatever breaks (code)
 3. **Merge PR #6 → deploy** (10.1, first pass)
 4. **9.1** CI pipeline — before more features, so every later PR is checked
-5. **8.5** error messages · **8.7** real verified badges + honest copy · **8.8** remove fake society data
+5. **8.5** error messages ✅ (#019) · **8.7** real verified badges + honest copy · **8.8** remove fake society data
+6. **4.3** server-side pricing — pulled forward from Phase 2: the feed's booking modal is unreachable (8.6), so the vehicle page is the only booking path, and it always fails. **No booking can be made from the UI today.**
 
-**Gate:** live URL; a stranger can use demo login, browse the feed, list a vehicle with a photo, and see real error messages. (Booking from the vehicle page still fails until 4.3.)
+**Gate:** live URL; a stranger can use demo login, browse the feed, list a vehicle with a photo, **request a booking**, and see readable error messages.
 
 ### Phase 2 — Make it credible (~2–3 days; branch `feat/bookings`)
-6. **4.3** Server-side pricing (fixes detail-page booking; one pricing function shared with the UI quote)
+7. ~~4.3~~ (moved to Phase 1)
 7. **4.1** State machine `canTransition` + participant check (closes skip-approval and stranger-cancel holes)
 8. **4.2** Cancellation + refund rule
 9. **4.4** Odometer validation + per-km overage

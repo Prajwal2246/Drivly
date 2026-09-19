@@ -11,5 +11,4 @@ export const SESSION_SECRET = required('ADMIN_SESSION_SECRET', 32);
 export const ADMIN_PASSWORD = required('ADMIN_PASSWORD');
 export const SUPABASE_URL = required('SUPABASE_URL').replace(/\/$/, '');
 export const SUPABASE_SERVICE_ROLE_KEY = required('SUPABASE_SERVICE_ROLE_KEY');
-// One URL for app + migrations + seed. Supabase: session pooler locally, transaction pooler on Vercel. See DEPLOYMENT.md, #018.
-export const DATABASE_URL = required('DATABASE_URL');
+// DATABASE_URL is checked in db.ts, not here: seed and tests/booking-race.ts import db.ts and must not need app secrets (#020).

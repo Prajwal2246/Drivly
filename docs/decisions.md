@@ -148,3 +148,10 @@ Format: **context** (what was true when we decided) → **decision** → **rejec
 - Admin Verify/Revoke now reports failures instead of silently doing nothing.
 **Rejected:** Mapping known technical strings to friendly ones on the client (the `humanizeAuthError` approach from the closed runbook branch) — a deny-list that misses whatever it hasn't seen; the server simply stops sending them. Per-field messages on every zod check — dozens of strings for the same sentence; the global map covers the defaults. A toast/notification library — existing `alert()` and inline error boxes are enough for now.
 **Consequences:** New API messages must be written for users (comment on `apiError`). New client fetches should use `api()`. `alert()` remains the UX for dashboard actions — replacing it is a UI task, not an error-content one. Dead dashboard code (`handleAddVehicle`, `newVehicle`) deleted rather than fixed.
+
+## 020 — `DATABASE_URL` is checked in `db.ts`, not `env.ts` (2026-09-19, amends #012)
+
+**Context:** #012 moved `DATABASE_URL` into `env.ts`. But `env.ts` checks every variable when it's imported, and `db.ts` imported it — so `prisma db seed` and `tests/booking-race.ts`, which only touch the database, failed on the first Production migration with "Missing or too-short env var ADMIN_SESSION_SECRET" and needed dummy secrets to run.
+**Decision:** `db.ts` reads and checks `DATABASE_URL` itself; `env.ts` keeps the app secrets. The app still fails at build/boot without either (routes import both).
+**Rejected:** Lazy getters in `env.ts` so each var is checked on first use — loses "fail at boot" for the secrets (#003). Dummy values for scripts — a workaround every developer has to rediscover.
+**Consequences:** Two places check env vars; each is one line and each file says why.

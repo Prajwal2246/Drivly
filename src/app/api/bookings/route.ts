@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
     if (totalCost === undefined) {
       // ponytail: the vehicle page doesn't send totalCost; task 4.3 computes it server-side and removes this branch
-      return apiError('BAD_REQUEST', "We couldn't price this booking. Please book from the feed for now.");
+      return apiError('BAD_REQUEST', "Booking isn't available right now. Please try again later.");
     }
 
     const start = new Date(startTime);

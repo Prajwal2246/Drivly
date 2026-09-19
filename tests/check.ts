@@ -4,7 +4,7 @@ import { signJwt, verifyJwt, hashPassword, verifyPassword } from '../src/lib/aut
 import { rateLimit } from '../src/lib/rate-limit';
 import { validateUpload, DL_EXT, PHOTO_EXT, vehicleSchema, vehicleUpdateSchema } from '../src/lib/validations';
 import { userMessage, GENERIC_ERROR } from '../src/lib/api-client';
-import { checkPastDate, checkOwnerBooking, checkOverlap } from '../src/lib/booking-rules';
+import { checkPastDate, checkOwnerBooking, checkOverlap, quoteBooking, depositFor } from '../src/lib/booking-rules';
 
 async function runTests() {
   console.log('🧪 Starting Drivly Test Verification Suite...');
@@ -125,7 +125,23 @@ async function runTests() {
   // End time before start time
   const invalidEndErr = checkPastDate(futureStart, futureStart, now);
   assert.strictEqual(invalidEndErr, 'Booking end time must be after the start time.', 'Should catch end time <= start time');
+  assert.strictEqual(checkPastDate(new Date('garbage'), futureEnd, now), 'Please choose a valid start and end time.', 'Unparseable dates rejected, not passed through');
+  assert.strictEqual(checkPastDate(futureStart, new Date(futureStart.getTime() + 31 * 24 * 3600_000), now), 'Bookings can be at most 30 days long.', 'Over 30 days rejected');
+  assert.strictEqual(checkPastDate(futureStart, new Date(futureStart.getTime() + 30 * 24 * 3600_000), now), null, 'Exactly 30 days allowed');
   console.log('✅ Date Scheduling Validators: OK');
+
+  // Server-side pricing — see docs/decisions.md #021
+  const t0q = new Date('2026-07-20T10:00:00Z');
+  const hoursLater = (h: number) => new Date(t0q.getTime() + h * 3600_000);
+  assert.deepStrictEqual(quoteBooking(150, 'CAR', t0q, hoursLater(2)), { hours: 2, rental: 300, fee: 15, total: 315, deposit: 2000 }, '2h car at ₹150/hr');
+  assert.strictEqual(quoteBooking(150, 'CAR', t0q, new Date(t0q.getTime() + 61 * 60_000)).hours, 2, 'Partial hour billed as a full hour');
+  const odd = quoteBooking(99.99, 'BIKE', t0q, hoursLater(3));
+  assert.strictEqual(odd.rental, 299.97, 'No float drift: ₹99.99 × 3 is exactly ₹299.97');
+  assert.strictEqual(odd.fee, 15, '5% fee rounded to the paisa (14.9985 → 15.00)');
+  assert.strictEqual(odd.total, 314.97, 'Total = rental + fee');
+  assert.strictEqual(depositFor('BIKE'), 1000, 'Bike deposit');
+  assert.ok(quoteBooking(100_000, 'CAR', t0q, hoursLater(720)).total < 1e8, 'Max booking fits Decimal(10,2)');
+  console.log('✅ Server-Side Pricing: OK');
 
   // B. Owner Self-Booking Rules Validation
   assert.strictEqual(checkOwnerBooking('owner_1', 'renter_2'), null, 'Renting other user\'s listing should succeed');

@@ -66,7 +66,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 |---|---|---|---|---|---|
 | 4.1 | State machine in `booking-rules.ts`: `canTransition(from, to, actor)` table; route just calls it | S | Turns long `if` chains into a testable map. Also: decide whether "Borrowed" is derived from an ACTIVE booking (see #014) | ⬜ | |
 | 4.2 | `CANCELLED` transition (renter before APPROVED, owner before ACTIVE) with refund rule | S | Enum exists, path doesn't | ⬜ | |
-| 4.3 | Compute `totalCost` server-side from `pricePerHour × hours` | S | Client sends the price today. **Also fixes live bug:** `VehicleDetailsClient` doesn't send `totalCost`, so booking from the detail page always 400s | ⬜ | |
+| 4.3 | Compute `totalCost` server-side from `pricePerHour × hours` | S | Client sent the price; the detail page sent none, so booking always failed | 🔍 `quoteBooking()` shared by server + page; verify a real booking after release | #021 |
 | 4.4 | Odometer: enforce `odometerEnd ≥ odometerStart`, per-km overage fee | S | Real pricing rule | ⬜ | |
 | 4.5 | Split `DashboardClient.tsx` (~1,000 lines) into `RenterBookings`, `OwnerBookings`, `InspectionModal`, `ChallanModal` (dead `handleAddVehicle` already deleted in #019) | M | Biggest maintainability smell | ⬜ | |
 

@@ -26,7 +26,8 @@ Needed before Modules 1–3 can be verified against a real database. See decisio
 - [ ] Manual steps above → verify Modules 1–3 on a real DB
 - [ ] Merge PR #6 → deploy to Vercel (10.1)
 - [ ] 9.1 CI pipeline (tsc, lint, tests/check.ts, build)
-- [ ] 8.5 Error messages (login page done in `docs/deployment-runbook`; rest pending) · 8.7 Real verified badges + honest copy · 8.8 Remove fake society data
+- [x] 8.5 User-facing error messages everywhere (#019)
+- [ ] 8.7 Real verified badges + honest copy · 8.8 Remove fake society data
 - [ ] **Gate:** live demo works end to end except detail-page booking
 
 ## ⏭️ Phase 2 — Make it credible (`feat/bookings`)

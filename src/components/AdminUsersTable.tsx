@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { api } from '@/lib/api-client';
 
 export type AdminUser = { id: string; name: string; phone: string; societyName: string; role: string; dlPath: string | null; dlVerified: boolean };
 
@@ -8,8 +9,12 @@ export default function AdminUsersTable({ users: initial }: { users: AdminUser[]
   const [users, setUsers] = useState(initial);
 
   const setVerified = async (id: string, dlVerified: boolean) => {
-    const res = await fetch(`/api/admin/users/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dlVerified }) });
-    if (res.ok) setUsers(u => u.map(x => (x.id === id ? { ...x, dlVerified } : x)));
+    try {
+      await api(`/api/admin/users/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dlVerified }) });
+      setUsers(u => u.map(x => (x.id === id ? { ...x, dlVerified } : x)));
+    } catch (err) {
+      alert((err as Error).message); // was silently ignored before
+    }
   };
 
   return (

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, MapPin, Building, Shield, Loader2, AlertCircle, CheckCircle2, ArrowLeft, Car, FileCheck } from 'lucide-react';
+import { api } from '@/lib/api-client';
 
 interface ProfileClientProps {
   initialUser: {
@@ -43,9 +44,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     const body = new FormData();
     body.append('file', file);
     try {
-      const res = await fetch('/api/auth/profile/dl', { method: 'POST', body });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || 'Upload failed.');
+      const data = await api('/api/auth/profile/dl', { method: 'POST', body });
       setDl({ path: data.dlPath, verified: false });
       setSuccessMsg('Driving licence uploaded. An admin will review it.');
     } catch (err: any) {
@@ -68,17 +67,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     setSuccessMsg(null);
 
     try {
-      const response = await fetch('/api/auth/profile', {
+      await api('/api/auth/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update profile.');
-      }
 
       setSuccessMsg('Profile updated successfully!');
       router.refresh();

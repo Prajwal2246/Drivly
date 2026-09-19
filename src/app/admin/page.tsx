@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import type { UserWaitlist } from '@prisma/client';
 import AdminDashboardClient from '@/components/AdminDashboardClient';
+import { Logger } from '@/lib/logger';
 
 // Define a type for the client‑ready payload (Date → ISO string)
 type SerializedWaitlist = Omit<UserWaitlist, 'createdAt'> & { createdAt: string };
@@ -26,16 +27,14 @@ export default async function AdminPage() {
 
     return <AdminDashboardClient initialData={serializedData} users={users.map(({ society, ...u }) => ({ ...u, societyName: society.name }))} />;
   } catch (error) {
-    console.error('Error fetching waitlist registrations:', error);
+    Logger.error('admin_page_exception', error); // details stay in the server logs (#019)
     return (
       <div className="min-h-screen bg-black text-zinc-100 flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-2xl font-bold text-red-400 mb-3">Database Connection Error</h2>
-        <p className="text-zinc-400 max-w-md mb-6">
-          Could not fetch waitlist registrations. Please make sure your database is running and the `DATABASE_URL` connection string is set up correctly.
+        <h2 className="text-2xl font-bold text-red-400 mb-3">Couldn&apos;t load the dashboard</h2>
+        <p className="text-zinc-400 max-w-md">
+          We couldn&apos;t reach the database. Please try again in a moment. If this keeps happening, check the
+          server logs for <code>admin_page_exception</code>.
         </p>
-        <div className="text-xs font-mono bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-zinc-500 overflow-x-auto max-w-xl text-left">
-          {error instanceof Error ? error.message : String(error)}
-        </div>
       </div>
     );
   }

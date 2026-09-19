@@ -10,7 +10,7 @@ import { validateUpload, PHOTO_EXT } from '@/lib/validations';
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getSession(req);
-    if (!user) return apiError('UNAUTHORIZED', 'Unauthorized');
+    if (!user) return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     const { id } = await params;
 
     const vehicle = await prisma.vehicle.findUnique({ where: { id }, select: { ownerId: true } });
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (vehicle.ownerId !== user.userId) return apiError('FORBIDDEN', 'Only the owner can change this photo.');
 
     const file = (await req.formData()).get('file');
-    if (!(file instanceof File)) return apiError('BAD_REQUEST', 'No file provided.');
+    if (!(file instanceof File)) return apiError('BAD_REQUEST', 'Please choose a file to upload.');
     const invalid = validateUpload(file.type, file.size, PHOTO_EXT);
     if (invalid) return apiError('VALIDATION_ERROR', invalid);
 
@@ -29,6 +29,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ success: true, photoUrl: vehiclePhotoUrl(photoPath) });
   } catch (error) {
     Logger.error('vehicle_photo_upload_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+// zod's defaults ("Invalid input: expected string, received undefined") are for developers. Any check without
+// its own message gets a user-facing one instead; explicit messages below still win. See docs/decisions.md #019.
+const FIELD_LABELS: Record<string, string> = { colorHex: 'colour', pricePerHour: 'price per hour', expectedRentalPrice: 'expected price' };
+z.config({
+  customError: (iss) => {
+    const key = String(iss.path?.at(-1) ?? '');
+    const label = FIELD_LABELS[key] ?? (key.replace(/([A-Z])/g, ' $1').toLowerCase() || 'value');
+    const Label = label[0].toUpperCase() + label.slice(1);
+    const numeric = iss.origin === 'number';
+    if (iss.code === 'too_big') return numeric ? `${Label} must be at most ${iss.maximum}.` : `${Label} must be ${iss.maximum} characters or fewer.`;
+    if (iss.code === 'too_small') return numeric ? `${Label} must be at least ${iss.minimum}.` : `${Label} is too short.`;
+    return `Please enter a valid ${label}.`;
+  },
+});
+
 export const waitlistSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   phone: z.string()
@@ -67,6 +82,9 @@ export const registerSchema = z.object({
   role: z.enum(['OWNER', 'RENTER', 'BOTH'], { message: 'Please select a valid role.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
+
+// PATCH /api/auth/profile
+export const profileUpdateSchema = registerSchema.pick({ name: true, email: true, city: true, societyName: true, role: true });
 
 export const loginSchema = z.object({
   phone: z.string().min(10, { message: 'Please enter a valid mobile number.' }),

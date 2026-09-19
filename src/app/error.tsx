@@ -1,39 +1,25 @@
 'use client';
-import { NextPage } from 'next';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
-// Simple global error UI – catches any unhandled error in the app.
-const GlobalError: NextPage<{ error?: Error }> = ({ error }) => {
-  const router = useRouter();
-
-  // If we want to auto‑redirect after a few seconds, uncomment:
-  // useEffect(() => {
-  //   const timer = setTimeout(() => router.refresh(), 5000);
-  //   return () => clearTimeout(timer);
-  // }, []);
+// Global error boundary. Never render error.message — for server errors Next replaces it anyway, and for
+// client errors it's developer text. The digest lets us find the full error in the server logs. See #019.
+export default function GlobalError({ error, unstable_retry }: { error: Error & { digest?: string }; unstable_retry: () => void }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-900 text-zinc-100 p-8">
-      <div className="max-w-lg text-center">
+      <div role="alert" className="max-w-lg text-center">
         <h1 className="text-3xl font-bold mb-4">Something went wrong</h1>
         <p className="mb-6 text-zinc-300">
-          An unexpected error occurred. Please try again later or contact support.
+          We couldn&apos;t load this page. Please try again in a moment.
         </p>
-        {error && (
-          <pre className="text-xs bg-zinc-800 p-4 rounded overflow-x-auto text-left whitespace-pre-wrap">
-            {error.message}
-          </pre>
-        )}
-        <button
-          onClick={() => router.refresh()}
-          className="mt-4 px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-white"
-        >
-          Retry
+        {error.digest && <p className="text-xs text-zinc-500 mb-4">Reference: {error.digest}</p>}
+        <button onClick={() => unstable_retry()} className="mt-2 px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-white">
+          Try again
         </button>
       </div>
     </div>
   );
-};
-
-export default GlobalError;
+}

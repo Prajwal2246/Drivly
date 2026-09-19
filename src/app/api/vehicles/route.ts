@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const userPayload = await getSession(req);
 
     if (!userPayload) {
-      return apiError('UNAUTHORIZED', 'Unauthorized');
+      return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     }
 
     // Find all vehicles in the user's society
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, vehicles });
   } catch (error) {
     Logger.error('get_vehicles_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const userPayload = await getSession(req);
 
     if (!userPayload) {
-      return apiError('UNAUTHORIZED', 'Unauthorized');
+      return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     }
 
     // The /dashboard/list-vehicle page hides the form from renters; the API has to enforce it too.
@@ -69,6 +69,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, vehicle: newVehicle });
   } catch (error) {
     Logger.error('post_vehicle_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

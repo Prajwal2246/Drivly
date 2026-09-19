@@ -68,7 +68,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 | 4.2 | `CANCELLED` transition (renter before APPROVED, owner before ACTIVE) with refund rule | S | Enum exists, path doesn't | ⬜ | |
 | 4.3 | Compute `totalCost` server-side from `pricePerHour × hours` | S | Client sends the price today. **Also fixes live bug:** `VehicleDetailsClient` doesn't send `totalCost`, so booking from the detail page always 400s | ⬜ | |
 | 4.4 | Odometer: enforce `odometerEnd ≥ odometerStart`, per-km overage fee | S | Real pricing rule | ⬜ | |
-| 4.5 | Split `DashboardClient.tsx` (~1,100 lines) into `RenterBookings`, `OwnerBookings`, `InspectionModal`, `ChallanModal`. Delete dead `handleAddVehicle`/`newVehicle` | M | Biggest maintainability smell | ⬜ | |
+| 4.5 | Split `DashboardClient.tsx` (~1,000 lines) into `RenterBookings`, `OwnerBookings`, `InspectionModal`, `ChallanModal` (dead `handleAddVehicle` already deleted in #019) | M | Biggest maintainability smell | ⬜ | |
 
 ## 5. Payments & Challans
 | # | Change | Size | Why | Status | Log |
@@ -99,7 +99,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 | 8.2 | `loading.tsx` + `error.tsx` per route group | S | | ⬜ | |
 | 8.3 | Accessibility: input labels, modal focus trap, `aria-live` on errors | S | Cheap, frequently asked | ⬜ | |
 | 8.4 | Mobile layout check on dashboard tables | S | | ⬜ | |
-| 8.5 | **Added:** clients show `[object Object]` because API errors are `{ code, message }`; read `data.error.message` everywhere (fixed in Module 3 files and the login page) | S | Every error message is broken | ⬜ partial | #013 |
+| 8.5 | **Added:** users must only see messages written for them — `[object Object]`, zod defaults, "Internal Server Error", raw DB errors on error pages | S | Every error message was broken | ✅ `api()` client helper, friendly `apiError`, global zod error map, safe error pages | #019 |
 | 8.6 | **Added:** `FeedClient` booking modal is unreachable (`onRequest` never called by `VehicleCard`) — delete or wire up | S | Dead code | ⬜ | |
 | 8.7 | **Added:** "Verified Owner" / "DL Verified host" badges are hardcoded (`VehicleCard`, `VehicleDetailsClient`) — drive from `owner.dlVerified`. Landing/FAQ/SEO copy says "verified societies" though societies are self-declared | S | Fake trust claims | ⬜ | |
 | 8.8 | **Added:** Landing society suggestions show made-up listing counts/distances, and "Greenwood Heights Cluster" doesn't match the seeded "Greenwood Heights" (registering creates an empty society). Remove fake numbers, fix names | S | Fake data | ⬜ | |

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
 import VehicleCard from "@/components/VehicleCard";
+import { api } from '@/lib/api-client';
 
 interface Vehicle {
   id: string;
@@ -74,7 +75,7 @@ export default function FeedClient({ user, initialVehicles }: FeedClientProps) {
     const totalCost = selectedVehicle.pricePerHour * bookingHours;
 
     try {
-      const response = await fetch("/api/bookings", {
+      await api("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -84,11 +85,6 @@ export default function FeedClient({ user, initialVehicles }: FeedClientProps) {
           totalCost,
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to submit request.");
-      }
 
       setIsSuccess(true);
     } catch (err: any) {

@@ -1,24 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { z } from 'zod';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
 import { getSession, signSession, SESSION_COOKIE } from '@/lib/session';
+import { profileUpdateSchema } from '@/lib/validations';
 
-const profileUpdateSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
-  city: z.string().trim().min(2, { message: 'City must be at least 2 characters.' }),
-  societyName: z.string().trim().min(2, { message: 'Society name must be at least 2 characters.' }),
-  role: z.enum(['OWNER', 'RENTER', 'BOTH'], { message: 'Please select a valid role.' }),
-});
 
 export async function PATCH(req: NextRequest) {
   try {
     const userPayload = await getSession(req);
 
     if (!userPayload) {
-      return apiError('UNAUTHORIZED', 'Unauthorized');
+      return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     }
 
     const body = await req.json();
@@ -84,6 +77,6 @@ export async function PATCH(req: NextRequest) {
     return response;
   } catch (error) {
     Logger.error('profile_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { signJwt, verifyJwt, hashPassword, verifyPassword } from '../src/lib/auth';
 import { rateLimit } from '../src/lib/rate-limit';
 import { validateUpload, DL_EXT, PHOTO_EXT, vehicleSchema, vehicleUpdateSchema } from '../src/lib/validations';
+import { userMessage, GENERIC_ERROR } from '../src/lib/api-client';
 import { checkPastDate, checkOwnerBooking, checkOverlap } from '../src/lib/booking-rules';
 
 async function runTests() {
@@ -88,6 +89,20 @@ async function runTests() {
   assert.ok(vehicleUpdateSchema.safeParse({ listed: false }).success, 'partial update with only listed is valid');
   assert.ok(!vehicleUpdateSchema.safeParse({ listed: 'no' }).success, 'listed must be boolean');
   console.log('✅ Vehicle Schema: OK');
+
+  // User-facing errors — see docs/decisions.md #019
+  const missing = vehicleSchema.safeParse({ type: 'CAR', model: 'City', year: 2020, pricePerHour: 100 });
+  assert.strictEqual(missing.error!.issues[0].message, 'Please enter a valid brand.', 'missing field gets a friendly message');
+  const tooLong = vehicleSchema.safeParse({ type: 'CAR', brand: 'x'.repeat(60), model: 'City', year: 2020, pricePerHour: 100 });
+  assert.strictEqual(tooLong.error!.issues[0].message, 'Brand must be 50 characters or fewer.', 'length limit is phrased for users');
+  const badYear = vehicleSchema.safeParse({ type: 'CAR', brand: 'Honda', model: 'City', year: 'abc', pricePerHour: 100 });
+  assert.ok(!/expected|received|NaN|Invalid input/.test(badYear.error!.issues[0].message), 'no zod jargon: ' + badYear.error!.issues[0].message);
+  assert.strictEqual(vehicleSchema.safeParse({ ...car, pricePerHour: 0 }).error!.issues[0].message, 'Price must be greater than 0.', 'explicit messages still win');
+  assert.strictEqual(userMessage(409, { error: { code: 'CONFLICT', message: 'Already booked.' } }), 'Already booked.', '4xx apiError message is shown');
+  assert.strictEqual(userMessage(500, { error: { message: 'relation "users" does not exist' } }), GENERIC_ERROR, '5xx detail is never shown');
+  assert.strictEqual(userMessage(502, null), GENERIC_ERROR, 'HTML/no-body error page gets generic text');
+  assert.strictEqual(userMessage(400, { error: 'flat string' }), GENERIC_ERROR, 'unexpected shape falls back, never [object Object]');
+  console.log('✅ User-facing error messages: OK');
 
   // ==========================================
   // 2. INTEGRATION TESTS: BOOKING RULES

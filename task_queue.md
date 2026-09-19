@@ -17,7 +17,8 @@ When a task is finished: tick it here, set its status in the plan, add a decisio
 ✅ Done 2026-09-19: Production runs the new code, schema pushed, seeded; demo logins 200, feed shows 6 seeded vehicles, `/api/auth/user-login` → 404.
 - [x] Supabase → Storage → **private** bucket `dl`
 - [ ] Supabase → Storage → **public** bucket `vehicles` (optional: image/jpeg, image/png, image/webp; 4 MB)
-- [x] Vercel → Environment Variables (Production; **Preview still missing all but `ADMIN_PASSWORD`**): `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- [x] Vercel → Environment Variables (Production)
+- [ ] *Deferred:* Preview environment — needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` from the separate preview Supabase project + `db push`/`seed` there. Until then Preview builds fail (red check on PRs; doesn't block merging). Reset that project's DB password first (it was exposed in chat).: `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
       - `DATABASE_URL` on Vercel = **transaction pooler (:6543)**, no `sslmode` parameter. `POSTGRES_*` vars are no longer read
 - [ ] Local `.env` (`cp .env.example .env`) with the **session pooler (:5432)** URL of the database you're migrating
 - [x] Clear old data (waitlist is kept): `echo 'TRUNCATE users, vehicles, bookings CASCADE;' | npx prisma db execute --stdin`

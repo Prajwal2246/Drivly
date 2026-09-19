@@ -24,6 +24,7 @@ Source of truth for the improvement work. `task_queue.md` holds only the next ac
 | 8. Frontend / UX | ⬜ 0/4 | |
 | 9. Quality, CI, Observability | ⬜ 0/5 | |
 | 10. Showcase (resume) | ⬜ 0/5 | |
+| 11. UI redesign | 🔍 1/6 (foundation) | |
 
 Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 
@@ -124,6 +125,17 @@ Added 2026-09-17: what turns a working project into one that gets shortlisted �
 | 10.3 | README "Engineering highlights" linking to decisions + architecture diagram (browser → routes → Prisma → Postgres / Storage / Razorpay webhook) + CI badge | S | 30-second proof of depth | ⬜ | |
 | 10.4 | Load test (k6/autocannon) on feed + booking create; `EXPLAIN ANALYZE` showing indexes used; record real p95 numbers in README | M | Real metrics for resume bullets — never invent numbers | ⬜ | |
 | 10.5 | Final resume bullets — only claims that are true, each backed by code, a test or a decision entry | S | One false claim sinks the rest in an interview | ⬜ | |
+
+## 11. UI redesign
+Added 2026-09-19. Direction approved on the style-guide canvas (private link: https://claude.ai/artifact/Nc6hW4xTFRtL8U5dF6Gf6c): warm community, indigo lead, Fraunces + DM Sans, light + dark.
+| # | Change | Size | Why | Status | Log |
+|---|---|---|---|---|---|
+| 11.1 | Foundation: tokens + fonts, `Button`/`Input`/`Select`/`Badge`/`Toaster`/`AppHeader`, fix 86 invalid shades, `alert()` → toasts | M | No shared design layer; broken colours; 6 different headers | 🔍 PR to `develop` | #022 |
+| 11.2 | Landing + login | M | First impression | ⬜ | |
+| 11.3 | Feed + vehicle page | M | What renters and recruiters see first | ⬜ | |
+| 11.4 | Dashboard — together with 4.5 (split the ~1,000-line component) and a real delete dialog | L | Largest, messiest screen; restyle once | ⬜ | |
+| 11.5 | Profile + admin | M | | ⬜ | |
+| 11.6 | Dark mode everywhere: move dark tokens to `:root`, drop `ui-v2` | S | Last step once every page is migrated | ⬜ | #022 |
 
 ## Known ceilings (accepted shortcuts, with upgrade triggers)
 - Rate limiter is per serverless instance (#005) → shared store when abuse is observed.

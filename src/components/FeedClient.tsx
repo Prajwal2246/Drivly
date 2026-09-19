@@ -2,23 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Search,
-  Calendar,
-  Clock,
-  DollarSign,
-  LogOut,
-  LayoutDashboard,
-  X,
-  Shield,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  User,
-} from "lucide-react";
+import { Search, X, Shield, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import EmptyState from "@/components/EmptyState";
 import VehicleCard from "@/components/VehicleCard";
 import { api } from '@/lib/api-client';
+import AppHeader from '@/components/ui/AppHeader';
 
 interface Vehicle {
   id: string;
@@ -57,11 +45,6 @@ export default function FeedClient({ user, initialVehicles }: FeedClientProps) {
 
   const router = useRouter();
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.refresh();
-    router.push("/login");
-  };
 
   const handleBookRequest = async () => {
     if (!selectedVehicle) return;
@@ -103,40 +86,7 @@ export default function FeedClient({ user, initialVehicles }: FeedClientProps) {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col pb-12">
       {/* Header */}
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between shadow-sm">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => router.push("/")}
-        >
-          <div className="w-8 h-8 rounded-lg bg-zinc-950 flex items-center justify-center text-white font-bold">
-            D
-          </div>
-          <span className="font-bold text-lg text-zinc-950">Drivly</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push("/profile")}
-            className="flex items-center gap-1.5 px-4 py-2 hover:bg-zinc-100 rounded-xl text-xs font-bold text-zinc-700 transition cursor-pointer border border-zinc-200 bg-white"
-          >
-            <User className="w-3.5 h-3.5" />
-            My Profile
-          </button>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-1.5 px-4 py-2 hover:bg-zinc-100 rounded-xl text-xs font-bold text-zinc-700 transition cursor-pointer border border-zinc-200 bg-white"
-          >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            My Dashboard
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Logout
-          </button>
-        </div>
-      </header>
+      <AppHeader name={user.name} society={user.society} />
 
       {/* Main Content Container */}
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex-1">

@@ -32,8 +32,8 @@ export default function WaitlistForm() {
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-white border border-zinc-200 rounded-3xl p-6 sm:p-10 shadow-xl relative">
-      <h3 className="text-xl font-bold text-zinc-955 mb-2 text-center sm:text-left">Enter your Society</h3>
-      <p className="text-zinc-650 mb-8 text-xs sm:text-sm text-center sm:text-left leading-relaxed">
+      <h3 className="text-xl font-bold text-zinc-950 mb-2 text-center sm:text-left">Enter your Society</h3>
+      <p className="text-zinc-700 mb-8 text-xs sm:text-sm text-center sm:text-left leading-relaxed">
         Select or enter your gated community name below to access your local sharing pool.
       </p>
 
@@ -172,8 +172,8 @@ export default function WaitlistForm() {
               </svg>
 
               {/* Map Labels */}
-              <div className="absolute top-2 left-3 flex items-center gap-1.5 text-[8.5px] font-bold text-zinc-400 uppercase tracking-wider bg-white/95 px-2 py-0.5 rounded border border-zinc-150 select-none">
-                <MapPin className="w-2.5 h-2.5 text-zinc-450" />
+              <div className="absolute top-2 left-3 flex items-center gap-1.5 text-[8.5px] font-bold text-zinc-400 uppercase tracking-wider bg-white/95 px-2 py-0.5 rounded border border-zinc-200 select-none">
+                <MapPin className="w-2.5 h-2.5 text-zinc-500" />
                 Neighborhood Clusters
               </div>
 
@@ -187,7 +187,7 @@ export default function WaitlistForm() {
                   </span>
                 </div>
               ) : (
-                <div className="absolute bottom-2 left-3 right-3 bg-white/95 border border-zinc-200 text-zinc-550 p-2 rounded-xl text-[8.5px] leading-tight text-left shadow-sm select-none">
+                <div className="absolute bottom-2 left-3 right-3 bg-white/95 border border-zinc-200 text-zinc-600 p-2 rounded-xl text-[8.5px] leading-tight text-left shadow-sm select-none">
                   👈 Select a suggestion or click a pin to auto-fill.
                 </div>
               )}

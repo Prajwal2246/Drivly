@@ -49,7 +49,7 @@ export default function Header() {
               />
             </svg>
           </div>
-          <span className="text-lg font-bold text-zinc-955 tracking-tight">
+          <span className="text-lg font-bold text-zinc-950 tracking-tight">
             Driv<span className="text-zinc-700 font-medium">ly</span>
           </span>
         </div>
@@ -83,7 +83,7 @@ export default function Header() {
         {/* Mobile menu toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-zinc-600 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-955/20 rounded-lg"
+          className="md:hidden p-2 text-zinc-600 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-950/20 rounded-lg"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

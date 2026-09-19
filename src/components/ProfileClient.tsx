@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, MapPin, Building, Shield, Loader2, AlertCircle, CheckCircle2, ArrowLeft, Car, FileCheck } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Building, Shield, Loader2, AlertCircle, CheckCircle2, Car, FileCheck } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import AppHeader from '@/components/ui/AppHeader';
 
 interface ProfileClientProps {
   initialUser: {
@@ -87,20 +88,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col pb-12">
       {/* Header */}
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/feed')}>
-          <ArrowLeft className="w-5 h-5 text-zinc-650" />
-          <span className="font-bold text-sm text-zinc-700">Back to Society Feed</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 hover:bg-zinc-100 rounded-xl text-xs font-bold text-zinc-700 transition cursor-pointer border border-zinc-200 bg-white"
-          >
-            Dashboard
-          </button>
-        </div>
-      </header>
+      <AppHeader name={initialUser.name} society={initialUser.societyName} />
 
       {/* Main Content */}
       <main className="max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex-grow">
@@ -155,7 +143,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Mobile Number (Login Username)</label>
               <div className="mt-1.5 relative bg-zinc-100 border border-zinc-200 rounded-xl cursor-not-allowed">
-                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-450" />
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
                 <input 
                   type="tel" disabled 
                   value={initialUser.phone} 
@@ -204,7 +192,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   <option value="BOTH">Both (List & Borrow)</option>
                 </select>
               </div>
-              <p className="text-[10px] text-zinc-450 mt-1">
+              <p className="text-[10px] text-zinc-500 mt-1">
                 Changing your role to **Owner** or **Both** instantly unlocks the ability to list your vehicle in the society pool.
               </p>
             </div>
@@ -225,7 +213,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   {dlUploading ? 'Uploading…' : dl.path ? 'Replace file' : 'Upload front of DL'}
                 </label>
               </div>
-              <p className="text-[10px] text-zinc-450 mt-1">JPEG, PNG, WebP or PDF, max 4MB. Stored privately; only admins can view it. Re-uploading resets verification.</p>
+              <p className="text-[10px] text-zinc-500 mt-1">JPEG, PNG, WebP or PDF, max 4MB. Stored privately; only admins can view it. Re-uploading resets verification.</p>
             </div>
 
             {/* Actions */}
@@ -233,7 +221,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-grow py-3.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs rounded-xl transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:bg-zinc-100 disabled:text-zinc-450"
+                className="flex-grow py-3.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs rounded-xl transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:bg-zinc-100 disabled:text-zinc-500"
               >
                 {isSubmitting ? (
                   <>

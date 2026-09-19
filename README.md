@@ -66,7 +66,7 @@ cp .env.example .env
 All five are required — `src/lib/env.ts` throws at startup (and `next build` fails) if any is missing.
 
 ```env
-# Postgres. On Supabase use the *Session pooler* URL (IPv4, port 5432) — it works for the app, db push and seed.
+# Postgres. Supabase: session pooler (:5432) locally, transaction pooler (:6543) on Vercel; no `sslmode` param. See DEPLOYMENT.md.
 DATABASE_URL="postgresql://username:password@localhost:5432/drivly_db?schema=public"
 
 # Password for the /admin dashboard
@@ -119,6 +119,8 @@ npx tsx tests/booking-race.ts # 10 concurrent bookings for one slot → exactly 
 npm run build                 # production build (needs env vars)
 npx eslint                    # lint
 ```
+
+Deploying (Vercel + Supabase, connection strings, first-deploy steps, troubleshooting): [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 There is no `npm test` script or CI pipeline yet (plan task 9.1).
 

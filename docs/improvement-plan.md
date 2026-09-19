@@ -99,7 +99,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 | 8.2 | `loading.tsx` + `error.tsx` per route group | S | | ⬜ | |
 | 8.3 | Accessibility: input labels, modal focus trap, `aria-live` on errors | S | Cheap, frequently asked | ⬜ | |
 | 8.4 | Mobile layout check on dashboard tables | S | | ⬜ | |
-| 8.5 | **Added:** clients show `[object Object]` because API errors are `{ code, message }`; read `data.error.message` everywhere (fixed only in files touched by Module 3) | S | Every error message is broken | ⬜ | #013 |
+| 8.5 | **Added:** clients show `[object Object]` because API errors are `{ code, message }`; read `data.error.message` everywhere (fixed in Module 3 files and the login page) | S | Every error message is broken | ⬜ partial | #013 |
 | 8.6 | **Added:** `FeedClient` booking modal is unreachable (`onRequest` never called by `VehicleCard`) — delete or wire up | S | Dead code | ⬜ | |
 | 8.7 | **Added:** "Verified Owner" / "DL Verified host" badges are hardcoded (`VehicleCard`, `VehicleDetailsClient`) — drive from `owner.dlVerified`. Landing/FAQ/SEO copy says "verified societies" though societies are self-declared | S | Fake trust claims | ⬜ | |
 | 8.8 | **Added:** Landing society suggestions show made-up listing counts/distances, and "Greenwood Heights Cluster" doesn't match the seeded "Greenwood Heights" (registering creates an empty society). Remove fake numbers, fix names | S | Fake data | ⬜ | |
@@ -111,7 +111,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 | 9.2 | State-machine + cost-calc tests in `tests/check.ts` (after 4.1, 4.3) | S | | ⬜ | |
 | 9.3 | API integration test against local PG (docker-compose in CI); fold in `tests/booking-race.ts` | M | Honest unit vs integration split | ⬜ | |
 | 9.4 | Request-id in logger; log on every `apiError` | S | | ⬜ | |
-| 9.5 | Delete `ARCHITECTURE.md`/`DATABASE.md` duplicates of `docs/*.md` — keep one set (both are now stale vs. Modules 2–3) | S | | ⬜ | |
+| 9.5 | Delete `ARCHITECTURE.md`/`DATABASE.md` duplicates of `docs/*.md` — keep one set (both are now stale vs. Modules 2–3). `DEPLOYMENT.md` is current (#018); `SECURITY.md`/`API.md` still stale | S | | ⬜ | |
 
 ---
 

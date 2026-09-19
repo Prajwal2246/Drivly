@@ -11,7 +11,7 @@ Needed before Modules 1–3 can be verified against a real database. See decisio
 - [x] Supabase → Storage → create **private** bucket `dl`
 - [ ] Supabase → Storage → create **public** bucket `vehicles` (optional: restrict MIME to image/jpeg, image/png, image/webp; 4MB)
 - [ ] Local: `cp .env.example .env`, fill `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-- [ ] `DATABASE_URL` = Supabase **Session pooler** URL (port 5432). `POSTGRES_*` vars are no longer read
+- [ ] `DATABASE_URL`: session pooler (:5432) locally, **transaction pooler (:6543) on Vercel**, no `sslmode` param. `POSTGRES_*` vars are no longer read. Full steps: `DEPLOYMENT.md` → First deploy
 - [ ] Vercel → Environment Variables: same five, Production + Preview (build fails without them — intended)
 - [ ] Clear old users (required `societyId` FK + enum columns; waitlist is kept):
       `echo 'TRUNCATE users, vehicles, bookings CASCADE;' | npx prisma db execute --stdin`
@@ -26,7 +26,7 @@ Needed before Modules 1–3 can be verified against a real database. See decisio
 - [ ] Manual steps above → verify Modules 1–3 on a real DB
 - [ ] Merge PR #6 → deploy to Vercel (10.1)
 - [ ] 9.1 CI pipeline (tsc, lint, tests/check.ts, build)
-- [ ] 8.5 Error messages · 8.7 Real verified badges + honest copy · 8.8 Remove fake society data
+- [ ] 8.5 Error messages (login page done in `docs/deployment-runbook`; rest pending) · 8.7 Real verified badges + honest copy · 8.8 Remove fake society data
 - [ ] **Gate:** live demo works end to end except detail-page booking
 
 ## ⏭️ Phase 2 — Make it credible (`feat/bookings`)

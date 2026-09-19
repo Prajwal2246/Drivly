@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const userPayload = await getSession(req);
 
     if (!userPayload) {
-      return apiError('UNAUTHORIZED', 'Unauthorized');
+      return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     }
 
     // Get bookings where user is the renter
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     Logger.error('get_bookings_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }
 
@@ -60,13 +60,17 @@ export async function POST(req: NextRequest) {
     const userPayload = await getSession(req);
 
     if (!userPayload) {
-      return apiError('UNAUTHORIZED', 'Unauthorized');
+      return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     }
 
     const { vehicleId, startTime, endTime, totalCost } = await req.json();
 
-    if (!vehicleId || !startTime || !endTime || totalCost === undefined) {
-      return apiError('BAD_REQUEST', 'Missing required parameters.');
+    if (!vehicleId || !startTime || !endTime) {
+      return apiError('BAD_REQUEST', 'Please choose a vehicle and a start and end time.');
+    }
+    if (totalCost === undefined) {
+      // ponytail: the vehicle page doesn't send totalCost; task 4.3 computes it server-side and removes this branch
+      return apiError('BAD_REQUEST', "Booking isn't available right now. Please try again later.");
     }
 
     const start = new Date(startTime);
@@ -113,6 +117,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, booking: newBooking });
   } catch (error) {
     Logger.error('post_booking_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

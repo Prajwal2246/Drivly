@@ -3,6 +3,7 @@ import { signJwt } from '@/lib/auth';
 import { SESSION_SECRET, ADMIN_PASSWORD } from '@/lib/env';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import { apiError } from '@/lib/errors';
+import { Logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   if (!rateLimit(`admin-login:${clientIp(req)}`)) {
@@ -32,8 +33,9 @@ export async function POST(req: NextRequest) {
       return response;
     }
 
-    return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 });
+    return apiError('UNAUTHORIZED', 'Incorrect password.');
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    Logger.error('admin_login_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

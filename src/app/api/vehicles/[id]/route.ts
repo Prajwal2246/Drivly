@@ -9,7 +9,7 @@ import { vehicleUpdateSchema } from '@/lib/validations';
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getSession(req);
-    if (!user) return apiError('UNAUTHORIZED', 'Unauthorized');
+    if (!user) return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     const { id } = await params;
 
     const vehicle = await prisma.vehicle.findUnique({ where: { id }, select: { ownerId: true } });
@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ success: true, vehicle: updated });
   } catch (error) {
     Logger.error('patch_vehicle_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }
 
@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getSession(req);
-    if (!user) return apiError('UNAUTHORIZED', 'Unauthorized');
+    if (!user) return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     const { id } = await params;
 
     const vehicle = await prisma.vehicle.findUnique({ where: { id }, select: { ownerId: true, _count: { select: { bookings: true } } } });
@@ -47,6 +47,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ success: true });
   } catch (error) {
     Logger.error('delete_vehicle_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

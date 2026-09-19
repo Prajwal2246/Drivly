@@ -9,10 +9,10 @@ import { validateUpload, DL_EXT } from '@/lib/validations';
 export async function POST(req: NextRequest) {
   try {
     const user = await getSession(req);
-    if (!user) return apiError('UNAUTHORIZED', 'Unauthorized');
+    if (!user) return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
 
     const file = (await req.formData()).get('file');
-    if (!(file instanceof File)) return apiError('BAD_REQUEST', 'No file provided.');
+    if (!(file instanceof File)) return apiError('BAD_REQUEST', 'Please choose a file to upload.');
 
     const invalid = validateUpload(file.type, file.size, DL_EXT);
     if (invalid) return apiError('VALIDATION_ERROR', invalid);
@@ -25,6 +25,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, dlPath });
   } catch (error) {
     Logger.error('dl_upload_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

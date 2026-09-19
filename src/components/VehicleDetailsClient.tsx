@@ -15,6 +15,7 @@ import {
   Fuel, 
   HeartHandshake
 } from 'lucide-react';
+import { api } from '@/lib/api-client';
 
 interface BookingSlot {
   id: string;
@@ -189,7 +190,7 @@ export default function VehicleDetailsClient({
     setSuccessMsg(null);
 
     try {
-      const res = await fetch('/api/bookings', {
+      await api('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -199,11 +200,6 @@ export default function VehicleDetailsClient({
           notes,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit booking request');
-      }
 
       setSuccessMsg(`Booking request submitted successfully! Pending approval from ${vehicle.owner.name}.`);
       setStartTimeStr('');

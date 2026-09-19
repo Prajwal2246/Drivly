@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, Loader2, AlertCircle } from 'lucide-react';
+import { api } from '@/lib/api-client';
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('');
@@ -16,17 +17,11 @@ export default function AdminLogin() {
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/login', {
+      await api('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Invalid credentials');
-      }
 
       // Refresh and redirect to dashboard
       router.refresh();

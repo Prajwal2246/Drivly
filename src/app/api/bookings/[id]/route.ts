@@ -17,7 +17,7 @@ export async function PATCH(
     const userPayload = await getSession(req);
 
     if (!userPayload) {
-      return apiError('UNAUTHORIZED', 'Unauthorized');
+      return apiError('UNAUTHORIZED', 'Your session has expired. Please log in again.');
     }
 
     const {
@@ -53,17 +53,17 @@ export async function PATCH(
     // 1. Status transition validations
     if (status) {
       if (!Object.hasOwn(BookingStatus, status)) { // not `in`: 'toString' in BookingStatus is true
-        return apiError('BAD_REQUEST', 'Invalid booking status.');
+        return apiError('BAD_REQUEST', "That action isn't available for this booking.");
       }
 
       // Security check: Only owner can approve/reject
       if ((status === 'APPROVED' || status === 'REJECTED') && !isOwner) {
-        return apiError('FORBIDDEN', 'Unauthorized to approve/reject this booking.');
+        return apiError('FORBIDDEN', 'Only the vehicle owner can approve or decline this request.');
       }
 
       // Security check: Only renter can activate/complete
       if ((status === 'ACTIVE' || status === 'COMPLETED') && !isRenter) {
-        return apiError('FORBIDDEN', 'Unauthorized to update this booking.');
+        return apiError('FORBIDDEN', 'Only the renter can start or end this trip.');
       }
 
       updateData.status = status;
@@ -107,7 +107,7 @@ export async function PATCH(
     // 2. Reviews & Rating validations
     if (ownerRating !== undefined || ownerReview !== undefined) {
       if (!isRenter) {
-        return apiError('FORBIDDEN', 'Only renter can review the owner.');
+        return apiError('FORBIDDEN', 'Only the renter can review the owner.');
       }
       if (booking.status !== 'COMPLETED' && status !== 'COMPLETED') {
         return apiError('BAD_REQUEST', 'Reviews are only allowed after trip completion.');
@@ -118,7 +118,7 @@ export async function PATCH(
 
     if (renterRating !== undefined || renterReview !== undefined) {
       if (!isOwner) {
-        return apiError('FORBIDDEN', 'Only owner can review the renter.');
+        return apiError('FORBIDDEN', 'Only the owner can review the renter.');
       }
       if (booking.status !== 'COMPLETED' && status !== 'COMPLETED') {
         return apiError('BAD_REQUEST', 'Reviews are only allowed after trip completion.');
@@ -130,11 +130,11 @@ export async function PATCH(
     // 3. Challan log validations (only by vehicle owner)
     if (challanPenalty !== undefined) {
       if (!isOwner) {
-        return apiError('FORBIDDEN', 'Only vehicle owner can log traffic challans.');
+        return apiError('FORBIDDEN', 'Only the vehicle owner can log a traffic challan.');
       }
       const penalty = Number(challanPenalty);
       if (!Number.isFinite(penalty) || penalty < 0) {
-        return apiError('BAD_REQUEST', 'Challan penalty must be a non-negative number.');
+        return apiError('BAD_REQUEST', 'Please enter a valid fine amount.');
       }
       updateData.challanPenalty = penalty;
       updateData.challanReason = challanReason || 'Traffic violation reported';
@@ -171,6 +171,6 @@ export async function PATCH(
     return NextResponse.json({ success: true, booking: updatedBooking });
   } catch (error) {
     Logger.error('booking_patch_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

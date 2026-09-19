@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api-client';
 import { 
   Car, Calendar, Clock, DollarSign, LogOut, ArrowLeft, Plus, 
   ShieldCheck, AlertCircle, CheckCircle2, ChevronRight, X, Play, StopCircle, Loader2, User
@@ -72,14 +73,6 @@ export default function DashboardClient({
   const [ownerBookings, setOwnerBookings] = useState<Booking[]>(initialOwnerBookings);
 
   // New vehicle form state
-  const [newVehicle, setNewVehicle] = useState({
-    type: 'CAR',
-    brand: '',
-    model: '',
-    year: new Date().getFullYear(),
-    colorHex: '#3b82f6',
-    pricePerHour: 100,
-  });
 
   // Modal inspection states
   const [activeInspectionBooking, setActiveInspectionBooking] = useState<Booking | null>(null);
@@ -116,13 +109,8 @@ export default function DashboardClient({
     router.push('/login');
   };
 
-  // Owner listing controls (#014, #015). Errors come back as { error: { code, message } }.
-  const vehicleRequest = async (id: string, init: RequestInit, path = '') => {
-    const res = await fetch(`/api/vehicles/${id}${path}`, init);
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.error?.message || 'Request failed.');
-    return data;
-  };
+  // Owner listing controls (#014, #015)
+  const vehicleRequest = (id: string, init: RequestInit, path = '') => api(`/api/vehicles/${id}${path}`, init);
 
   const handleToggleListed = async (vehicle: Vehicle) => {
     try {
@@ -155,55 +143,14 @@ export default function DashboardClient({
     }
   };
 
-  // Add a new vehicle
-  const handleAddVehicle = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/vehicles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newVehicle),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to list vehicle.');
-      }
-
-      setMyVehicles(prev => [data.vehicle, ...prev]);
-      setNewVehicle({
-        type: 'CAR',
-        brand: '',
-        model: '',
-        year: new Date().getFullYear(),
-        colorHex: '#3b82f6',
-        pricePerHour: 100,
-      });
-      alert('Vehicle listed successfully!');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // Owner action: Approve or Reject a request
   const handleOwnerAction = async (bookingId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
+      await api(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Action failed.');
-      }
 
       // Update local state
       setOwnerBookings(prev => 
@@ -224,7 +171,7 @@ export default function DashboardClient({
     
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/bookings/${activeInspectionBooking.id}`, {
+      await api(`/api/bookings/${activeInspectionBooking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -233,11 +180,6 @@ export default function DashboardClient({
           notes: inspectionNotes,
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to start trip.');
-      }
 
       // Update local state
       setRenterBookings(prev => 
@@ -276,7 +218,7 @@ export default function DashboardClient({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/bookings/${activeEndTripBooking.id}`, {
+      await api(`/api/bookings/${activeEndTripBooking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -284,11 +226,6 @@ export default function DashboardClient({
           odometerEnd: endOdometer,
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to end trip.');
-      }
 
       // Update local state
       setRenterBookings(prev => 
@@ -312,7 +249,7 @@ export default function DashboardClient({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/bookings/${activeReviewBooking.id}`, {
+      await api(`/api/bookings/${activeReviewBooking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -320,11 +257,6 @@ export default function DashboardClient({
           [reviewKey]: reviewComment,
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to submit review.');
-      }
 
       const updateList = (prev: Booking[]) =>
         prev.map(b =>
@@ -352,7 +284,7 @@ export default function DashboardClient({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/bookings/${activeChallanBooking.id}`, {
+      const data = await api(`/api/bookings/${activeChallanBooking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -360,13 +292,6 @@ export default function DashboardClient({
           challanReason: challanReasonInput,
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to log challan.');
-      }
-
-      const data = await response.json();
 
       const updateList = (prev: Booking[]) =>
         prev.map(b =>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldAlert, ArrowLeft, Loader2, AlertCircle, Plus, Car } from 'lucide-react';
+import { api } from '@/lib/api-client';
 
 interface ListVehicleClientProps {
   user: {
@@ -37,27 +38,21 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
     setError(null);
 
     try {
-      const response = await fetch('/api/vehicles', {
+      const data = await api('/api/vehicles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to list vehicle.');
-      }
 
       // Photo is optional and uploaded after create (needs the vehicle id). A failed photo
       // doesn't undo the listing — resubmitting would create a duplicate vehicle.
       if (photo) {
         const body = new FormData();
         body.append('file', photo);
-        const photoRes = await fetch(`/api/vehicles/${data.vehicle.id}/photo`, { method: 'POST', body });
-        if (!photoRes.ok) {
-          const photoData = await photoRes.json().catch(() => null);
-          alert(`Vehicle listed, but the photo failed: ${photoData?.error?.message || 'upload error'}. You can add it from the dashboard.`);
+        try {
+          await api(`/api/vehicles/${data.vehicle.id}/photo`, { method: 'POST', body });
+        } catch (err) {
+          alert(`Your vehicle is listed, but the photo didn't upload: ${(err as Error).message} You can add it from the dashboard.`);
         }
       }
 

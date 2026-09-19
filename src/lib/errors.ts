@@ -22,7 +22,10 @@ const HTTP_STATUS_MAP: Record<ErrorCode, number> = {
 };
 
 // ponytail: uniform structured JSON error response factory
+// `message` is shown to users as-is (see src/lib/api-client.ts) — write it for them, not for developers.
+// 500s never carry detail: the real error goes to Logger.error at the call site. See docs/decisions.md #019.
 export function apiError(code: ErrorCode, message: string) {
+  if (code === 'INTERNAL_ERROR') message = 'Something went wrong on our side. Please try again in a moment.';
   return NextResponse.json(
     {
       success: false,

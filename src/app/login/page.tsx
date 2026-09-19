@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, Phone, User, Building, MapPin, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { api } from '@/lib/api-client';
 
 function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -46,17 +47,11 @@ function LoginForm() {
       : formData;
 
     try {
-      const response = await fetch(endpoint, {
+      await api(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      const data = await response.json().catch(() => null); // a 502 HTML page is not JSON
-
-      if (!response.ok) {
-        throw new Error(data?.error?.message || (isLogin ? 'Couldn’t sign you in. Please try again.' : 'Couldn’t create your account. Please try again.'));
-      }
 
       if (isLogin) {
         router.refresh();
@@ -80,22 +75,17 @@ function LoginForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      await api('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, password: 'demo123' }),
       });
 
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(data?.error?.message || 'Demo login failed. Demo accounts exist only after `npx prisma db seed`.');
-      }
-
       router.refresh();
       router.push('/feed');
     } catch (err: any) {
-      setError(err.message || 'An error occurred during demo login.');
+      // 401 here means the demo users don't exist in this database (not seeded) — not a wrong password.
+      setError(err.status === 401 ? "Demo accounts aren't available right now. Please register an account instead." : err.message);
       setIsSubmitting(false);
     }
   };

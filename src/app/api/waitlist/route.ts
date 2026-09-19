@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { waitlistSchema } from '@/lib/validations';
+import { apiError } from '@/lib/errors';
+import { Logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,13 +11,7 @@ export async function POST(req: NextRequest) {
     // 1. Validate input using shared Zod schema
     const validation = waitlistSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed', 
-          details: validation.error.flatten().fieldErrors 
-        },
-        { status: 400 }
-      );
+      return apiError('VALIDATION_ERROR', validation.error.issues[0].message);
     }
 
     const data = validation.data;
@@ -26,10 +22,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingRegistration) {
-      return NextResponse.json(
-        { error: 'This email is already registered on the waitlist.' },
-        { status: 409 }
-      );
+      return apiError('CONFLICT', 'This email is already registered on the waitlist.');
     }
 
     // 3. Save to database
@@ -59,10 +52,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Waitlist API Error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred. Please try again later.' },
-      { status: 500 }
-    );
+    Logger.error('waitlist_api_exception', error);
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

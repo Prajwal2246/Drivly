@@ -57,6 +57,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     Logger.error('register_api_exception', error);
-    return apiError('INTERNAL_ERROR', 'Internal Server Error');
+    return apiError('INTERNAL_ERROR', 'Internal error');
   }
 }

@@ -26,11 +26,13 @@ Needed before Modules 1–3 can be verified against a real database. See decisio
 - [ ] Manual steps above → verify Modules 1–3 on a real DB
 - [ ] Merge PR #6 → deploy to Vercel (10.1)
 - [ ] 9.1 CI pipeline (tsc, lint, tests/check.ts, build)
-- [ ] 8.5 Error messages (login page done in `docs/deployment-runbook`; rest pending) · 8.7 Real verified badges + honest copy · 8.8 Remove fake society data
-- [ ] **Gate:** live demo works end to end except detail-page booking
+- [x] 8.5 User-facing error messages everywhere (#019)
+- [ ] 8.7 Real verified badges + honest copy · 8.8 Remove fake society data
+- [ ] 4.3 Server-side pricing — **booking is impossible from the UI today** (vehicle page always 400s; feed modal unreachable)
+- [ ] **Gate:** live demo works end to end, including requesting a booking
 
 ## ⏭️ Phase 2 — Make it credible (`feat/bookings`)
-4.3 → 4.1 → 4.2 → 4.4 (+ 9.2 tests alongside) → 8.6, 4.5 → 5.4, 9.5, 10.2, 10.3 → **resume-ready checkpoint**
+4.1 → 4.2 → 4.4 (+ 9.2 tests alongside) → 8.6, 4.5 → 5.4, 9.5, 10.2, 10.3 → **resume-ready checkpoint**
 
 ## 📋 Per-module checklist
 - [ ] `npx tsc --noEmit` clean

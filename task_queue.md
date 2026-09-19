@@ -10,6 +10,7 @@ When a task is finished: tick it here, set its status in the plan, add a decisio
 
 ## 🧑‍💻 Waiting on you
 - [x] Merge PR #9 (user-facing error messages)
+- [x] Merge PR #10 (seed no longer needs app secrets)
 - [ ] Decide on `develop` — delete, reset to `main`, or keep (it's behind `main`)
 - [ ] Delete merged branches: `feat/auth-hardening`, `fix/remove-passwordless-demo-login`, `docs/deployment-runbook`
 

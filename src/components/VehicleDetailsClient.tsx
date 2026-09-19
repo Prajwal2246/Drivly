@@ -16,6 +16,7 @@ import {
   HeartHandshake
 } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { quoteBooking } from '@/lib/booking-rules';
 
 interface BookingSlot {
   id: string;
@@ -144,21 +145,14 @@ export default function VehicleDetailsClient({
       return;
     }
 
-    // 1. Calculate duration and costs
-    const diffMs = end.getTime() - start.getTime();
-    const totalHours = Math.ceil(diffMs / (1000 * 60 * 60));
-
-    const rentalCost = totalHours * vehicle.pricePerHour;
-    const deposit = vehicle.type === 'CAR' ? 2000 : 1000;
-    const fee = parseFloat((rentalCost * 0.05).toFixed(2)); // 5% platform service fee
-    const total = rentalCost + deposit + fee;
-
+    // 1. Same pricing rule the server stores (#021)
+    const q = quoteBooking(vehicle.pricePerHour, vehicle.type, start, end);
     setPriceBreakdown({
-      hours: totalHours,
-      rentalCost,
-      deposit,
-      fee,
-      total
+      hours: q.hours,
+      rentalCost: q.rental,
+      deposit: q.deposit,
+      fee: q.fee,
+      total: q.total + q.deposit, // due now: rental + fee + refundable deposit
     });
 
     // 2. Check overlap conflict with existing bookings

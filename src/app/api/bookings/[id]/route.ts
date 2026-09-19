@@ -3,10 +3,9 @@ import { prisma } from '@/lib/db';
 import { Logger } from '@/lib/logger';
 import { apiError } from '@/lib/errors';
 import { getSession } from '@/lib/session';
+import { depositFor } from '@/lib/booking-rules';
 import { BookingStatus, Prisma } from '@prisma/client';
 
-// ponytail: mock deposit hold amount until Razorpay (task 5.1)
-const MOCK_DEPOSIT = new Prisma.Decimal(5000);
 
 export async function PATCH(
   req: NextRequest,
@@ -71,7 +70,8 @@ export async function PATCH(
       if (status === 'APPROVED') {
         // ponytail: mock authorize deposit hold of 5000.0 on approval
         updateData.paymentStatus = 'HELD';
-        updateData.depositAmount = MOCK_DEPOSIT;
+        // Same deposit the renter was quoted (#021); still a mock hold until Razorpay (5.1)
+        updateData.depositAmount = depositFor(booking.vehicle.type);
       }
 
       if (status === 'ACTIVE' && odometerStart !== undefined) {
@@ -96,7 +96,7 @@ export async function PATCH(
         // Resolve deposit holds & rent payments
         updateData.paymentStatus = 'PAID';
         const finalPenalty = booking.challanPenalty;
-        const deposit = booking.depositAmount.isZero() ? MOCK_DEPOSIT : booking.depositAmount;
+        const deposit = booking.depositAmount.isZero() ? new Prisma.Decimal(depositFor(booking.vehicle.type)) : booking.depositAmount;
         updateData.refundAmount = Prisma.Decimal.max(0, deposit.minus(finalPenalty));
         if (finalPenalty.greaterThan(0)) {
           updateData.challanStatus = 'DEDUCTED';
@@ -142,7 +142,7 @@ export async function PATCH(
 
       // If the booking is already completed, deduct immediately and recalculate refund
       if (booking.status === 'COMPLETED') {
-        const deposit = booking.depositAmount.isZero() ? MOCK_DEPOSIT : booking.depositAmount;
+        const deposit = booking.depositAmount.isZero() ? new Prisma.Decimal(depositFor(booking.vehicle.type)) : booking.depositAmount;
         updateData.refundAmount = Prisma.Decimal.max(0, deposit.minus(penalty));
         updateData.challanStatus = 'DEDUCTED';
       }

@@ -40,7 +40,7 @@ When a task is finished: tick it here, set its status in the plan, add a decisio
 ## ▶️ Phase 1 — Make it work (~1 day of code)
 - [x] 1.7 Remove passwordless demo login (#017)
 - [x] 8.5 Users only see messages written for them (#019, PR #9)
-- [ ] **4.3 Server-side pricing — booking is impossible from the UI today** (vehicle page always fails; feed modal unreachable)
+- [x] **4.3 Server-side pricing** (#021) — verify a real booking on Production after the `develop → main` release
 - [ ] 9.1 CI pipeline: GitHub Actions + `npm test` (tsc, eslint, `tests/check.ts`, build)
 - [ ] 8.7 Real "Verified" badges from `dlVerified`; honest "verified societies" copy (landing, FAQ, SEO)
 - [ ] 8.8 Remove fake society listing counts/distances; fix "Greenwood Heights Cluster" name mismatch

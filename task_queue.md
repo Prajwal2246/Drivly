@@ -10,27 +10,30 @@ When a task is finished: tick it here, set its status in the plan, add a decisio
 
 ## 🧑‍💻 Waiting on you
 - [x] Merge PR #9 (user-facing error messages)
+- [x] Merge PR #10 (seed no longer needs app secrets)
 - [ ] Decide on `develop` — delete, reset to `main`, or keep (it's behind `main`)
 - [ ] Delete merged branches: `feat/auth-hardening`, `fix/remove-passwordless-demo-login`, `docs/deployment-runbook`
 
 ### Fix the Production deploy — `DEPLOYMENT.md` → "First deploy after the Module 1–3 merge"
-Status 2026-09-19: new code is live (PR #9 deploy succeeded; `/api/auth/user-login` → 404). Schema pushed. Seed pending.
+✅ Done 2026-09-19: Production runs the new code, schema pushed, seeded; demo logins 200, feed shows 6 seeded vehicles, `/api/auth/user-login` → 404.
 - [x] Supabase → Storage → **private** bucket `dl`
 - [ ] Supabase → Storage → **public** bucket `vehicles` (optional: image/jpeg, image/png, image/webp; 4 MB)
-- [x] Vercel → Environment Variables (Production; **Preview still missing all but `ADMIN_PASSWORD`**): `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- [x] Vercel → Environment Variables (Production)
+- [ ] *Deferred:* Preview environment — needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` from the separate preview Supabase project + `db push`/`seed` there. Until then Preview builds fail (red check on PRs; doesn't block merging). Reset that project's DB password first (it was exposed in chat).: `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (`openssl rand -base64 32`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
       - `DATABASE_URL` on Vercel = **transaction pooler (:6543)**, no `sslmode` parameter. `POSTGRES_*` vars are no longer read
 - [ ] Local `.env` (`cp .env.example .env`) with the **session pooler (:5432)** URL of the database you're migrating
 - [x] Clear old data (waitlist is kept): `echo 'TRUNCATE users, vehicles, bookings CASCADE;' | npx prisma db execute --stdin`
 - [x] `npx prisma db push`
-- [ ] `npx prisma db seed` (needed for the demo buttons)
+- [x] `npx prisma db seed` (needed for the demo buttons)
 - [x] Redeploy on Vercel (via PR #9 merge)
-- [ ] **Reset the database password** (it was pasted in chat) → update `DATABASE_URL` in Vercel → redeploy
+- [x] **Reset the database password** (it was pasted in chat) → update `DATABASE_URL` in Vercel → redeploy
 
 ### Verify on the real database (turns 🔍 → ✅ in the plan)
 - [ ] `npx tsx tests/booking-race.ts` against the transaction pooler — expect "1 of 10 concurrent requests won"
 - [ ] Smoke test: demo login → feed → list a vehicle with photo → unlist/relist → admin licence view
 - [x] Confirm `POST /api/auth/user-login` returns 404 on Production
-- [ ] Mark verified in the plan: 1.1 · 1.2 · 1.6 · 2.1 · 2.2 · 2.3 · 2.4 · 2.5 · 2.6 · 3.2
+- [x] Verified on Production (demo login, feed, dashboards): 1.1 · 1.2 · 2.1 · 2.3 · 2.4 · 2.6
+- [ ] Still to verify: 1.6 licence upload + admin view · 3.2 vehicle photo upload (`vehicles` bucket) · 2.5 race test · 2.2 indexes (`EXPLAIN`, with 10.4)
 
 ---
 

@@ -34,8 +34,8 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 ## 1. Auth & Sessions (`src/lib/auth.ts`, `src/proxy.ts`, `api/auth/*`)
 | # | Change | Size | Why | Status | Log |
 |---|---|---|---|---|---|
-| 1.1 | Replace `pbkdf2Sync(…,1000)` with `crypto.scryptSync` + `timingSafeEqual` | S | 1k iterations is 2010-era; scrypt is stdlib | 🔍 | #002 |
-| 1.2 | Delete hardcoded fallback secret; read once from `src/lib/env.ts` that throws at boot | S | Leaked-secret finding in any audit | 🔍 | #003 |
+| 1.1 | Replace `pbkdf2Sync(…,1000)` with `crypto.scryptSync` + `timingSafeEqual` | S | 1k iterations is 2010-era; scrypt is stdlib | ✅ | #002 |
+| 1.2 | Delete hardcoded fallback secret; read once from `src/lib/env.ts` that throws at boot | S | Leaked-secret finding in any audit | ✅ | #003 |
 | 1.3 | Remove `console.log` in `proxy.ts` (logged secret prefix) | S | Contradicts "structured logging" | ✅ | #003 |
 | 1.4 | Extract `getSession(req)` helper | S | Dedup ~16 copies; caught `user.id` vs `userId` bug | ✅ | #004 |
 | 1.5 | Rate limit login routes (in-memory, IP-keyed) | S | First question on any login form | ✅ | #005 |
@@ -45,12 +45,12 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 ## 2. Database (`prisma/schema.prisma`, `src/lib/db.ts`)
 | # | Change | Size | Why | Status | Log |
 |---|---|---|---|---|---|
-| 2.1 | `role`, `type`, `status`, `paymentStatus`, `challanStatus` → Prisma enums | S | DB-level integrity | 🔍 | #007 |
+| 2.1 | `role`, `type`, `status`, `paymentStatus`, `challanStatus` → Prisma enums | S | DB-level integrity | ✅ | #007 |
 | 2.2 | Indexes: `User(societyId)`, `Vehicle(ownerId)`, `Booking(vehicleId,startTime,endTime)`, `Booking(renterId)` | S | Every feed/booking query hits these | 🔍 | #008 |
-| 2.3 | `Society` table → `User.societyId` FK | M | Tenancy on a free-text string | 🔍 | #009 |
-| 2.4 | Money as `Decimal(10,2)` not `Float` | S | Float money is a classic gotcha | 🔍 | #010 |
+| 2.3 | `Society` table → `User.societyId` FK | M | Tenancy on a free-text string | ✅ | #009 |
+| 2.4 | Money as `Decimal(10,2)` not `Float` | S | Float money is a classic gotcha | ✅ | #010 |
 | 2.5 | Booking create in `$transaction` with `SELECT … FOR UPDATE` | M | Fixes overlap race | 🔍 run `tests/booking-race.ts` | #011 |
-| 2.6 | One `DATABASE_URL`, no URL guessing | S | App and migrations could hit different DBs | 🔍 | #012 |
+| 2.6 | One `DATABASE_URL`, no URL guessing | S | App and migrations could hit different DBs | ✅ | #012 |
 
 ## 3. Vehicles & Feed (`api/vehicles`, `FeedClient`, `VehicleCard`)
 | # | Change | Size | Why | Status | Log |

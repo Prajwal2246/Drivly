@@ -14,7 +14,7 @@ Source of truth for the improvement work. `task_queue.md` holds only the next ac
 
 | Module | Status | Commit |
 |---|---|---|
-| 1. Auth & Sessions | 🔍 6/7 — **1.7 critical, do first** | `fbb0a76` |
+| 1. Auth & Sessions | 🔍 7/7 | `fbb0a76`, 1.7 on `fix/remove-passwordless-demo-login` |
 | 2. Database | 🔍 6/6 | `a0cce60` |
 | 3. Vehicles & Feed | 🔍 3/5 done, 2 skipped | `9b98d85` |
 | 4. Bookings & Trip Lifecycle | ⬜ 0/5 — **next** | |
@@ -40,7 +40,7 @@ Branch: `feat/auth-hardening` (all modules so far, not merged to `main`).
 | 1.4 | Extract `getSession(req)` helper | S | Dedup ~16 copies; caught `user.id` vs `userId` bug | ✅ | #004 |
 | 1.5 | Rate limit login routes (in-memory, IP-keyed) | S | First question on any login form | ✅ | #005 |
 | 1.6 | Real DL upload to Supabase Storage, admin-verified | M | Was a fake claim | 🔍 | #006 |
-| 1.7 | **Added, critical:** `POST /api/auth/user-login` signs a session for any phone with no password — anyone can log in as any user. Gate demo login to demo phones only (or route it through password auth; `origin/develop` 66177e0 has a fix to compare) | S | Full account takeover | ⬜ **do first** | |
+| 1.7 | **Added, critical:** `POST /api/auth/user-login` signs a session for any phone with no password — anyone can log in as any user. Gate demo login to demo phones only (or route it through password auth; `origin/develop` 66177e0 has a fix to compare) | S | Full account takeover | ✅ route deleted; demo buttons use `/api/auth/login` | #017 |
 
 ## 2. Database (`prisma/schema.prisma`, `src/lib/db.ts`)
 | # | Change | Size | Why | Status | Log |

@@ -33,7 +33,6 @@ Drivly lets residents of the same society rent cars and bikes to each other. Eve
 - **Payments are simulated.** Approving a booking marks a ₹5,000 deposit as held; completing it marks it paid and computes the refund. No money moves.
 - **Societies are self-declared.** A society is created the first time someone registers with a new name + city. Nothing verifies that users actually live there.
 - **"Verified Owner" / "DL Verified host" badges on vehicle cards are static text**, not driven by licence verification (tracked in the plan).
-- **Demo login** (`/login` → "Demo as Renter/Owner") signs in by phone number without a password. See the security note below.
 
 ---
 
@@ -102,7 +101,7 @@ npm run dev
 ```
 Open http://localhost:3000.
 
-**Demo accounts** (created by the seed, society "Greenwood Heights", Mumbai):
+**Demo accounts** (created by the seed, society "Greenwood Heights", Mumbai). The "Demo as Renter/Owner" buttons on `/login` sign in with these through the normal password login, so they only work after seeding:
 
 | Role | Phone | Password |
 |---|---|---|
@@ -137,7 +136,6 @@ What's in place:
 - **Files:** licences live in a private bucket and are only exposed to admins through short-lived signed URLs; uploads are type- and size-checked (≤4 MB).
 
 Known gaps (tracked in [`docs/improvement-plan.md`](docs/improvement-plan.md)):
-- ⚠️ **`POST /api/auth/user-login` (demo login) issues a session for any phone number without a password.** It must not be reachable in a real deployment.
 - Admin is a single shared password with its own cookie, separate from user accounts (task 7.1).
 - Booking price is sent by the client (task 4.3).
 - Database TLS doesn't verify the server certificate.
@@ -165,7 +163,7 @@ Known gaps (tracked in [`docs/improvement-plan.md`](docs/improvement-plan.md)):
 │   │   ├── profile/              # Profile, role, licence upload
 │   │   ├── admin/                # Admin dashboard + login
 │   │   └── api/
-│   │       ├── auth/             # login, user-login (demo), register, logout, profile, profile/dl
+│   │       ├── auth/             # login, register, logout, profile, profile/dl
 │   │       ├── vehicles/         # GET/POST; [id] PATCH/DELETE; [id]/photo POST
 │   │       ├── bookings/         # GET/POST; [id] PATCH (status, inspection, reviews, challans)
 │   │       ├── admin/            # login, logout, users/[id] (verify), users/[id]/dl (signed URL)

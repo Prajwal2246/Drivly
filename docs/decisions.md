@@ -122,3 +122,10 @@ Format: **context** (what was true when we decided) → **decision** → **rejec
 **Decision:** Skip both. The vehicle detail page already receives upcoming PENDING/APPROVED/ACTIVE bookings from its server component and flags conflicts before submit; an endpoint would duplicate that query. A feed is scoped to one society — tens of vehicles — and client-side search already filters it.
 **Rejected:** Building them for the resume line — code with no user need is code to maintain.
 **Consequences:** Add 3.3 when a client without server rendering (mobile app) needs availability. Add 3.4 when a society's feed passes ~100 vehicles or the feed payload is measurably slow.
+
+## 017 — Delete passwordless demo login; demo buttons use the real login (2026-09-19)
+
+**Context:** `POST /api/auth/user-login` took `{ phone }` and signed a session for whichever user had that phone — no password, no check that it was a demo account — and created a user in any requested society if the phone was unknown. Phone numbers are shown to other users (feed, vehicle page, dashboards), so any logged-in user could take over a neighbour's account with one request. It was live on Production. Only the two demo buttons on `/login` used it.
+**Decision:** Delete the route. The demo buttons post the seeded phone + `demo123` to `/api/auth/login`, so demo sessions go through the same scrypt check and rate limit as everyone else. `tests/check.ts` asserts the route file stays deleted.
+**Rejected:** Gating the route on `VERCEL_ENV === 'preview'` or a `DEMO_LOGIN` flag — still a passwordless path, one misconfigured env var from Production (and Vercel sets `NODE_ENV=production` on Preview too). A `demo-accounts.ts` module (as on `develop` 66177e0) — two phone numbers and a password used in one component don't need a module; the seed stays the source of truth.
+**Consequences:** Demo buttons fail until `npx prisma db seed` has run on that database; the error message says so. The demo password is public by design — demo accounts must never hold real data. No auto-creation of demo users.

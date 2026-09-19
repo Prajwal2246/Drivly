@@ -74,21 +74,22 @@ function LoginForm() {
     }
   };
 
+  // Seeded demo accounts (prisma/seed.ts) through the normal password login — no passwordless path. See #017.
   const handleDemoLogin = async (phone: string) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/user-login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, society: 'Greenwood Heights' }),
+        body: JSON.stringify({ phone, password: 'demo123' }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Demo login failed.');
+        throw new Error(data.error?.message || 'Demo login failed. Demo accounts exist only after `npx prisma db seed`.');
       }
 
       router.refresh();

@@ -22,7 +22,7 @@ Needed before Modules 1–3 can be verified against a real database. See decisio
 - [ ] Mark 🔍 tasks ✅ in the plan
 
 ## ▶️ Phase 1 — Make it work (full roadmap: `docs/improvement-plan.md` → Roadmap)
-- [ ] 1.7 Remove passwordless demo login (`/api/auth/user-login`) — **critical, first**
+- [x] 1.7 Remove passwordless demo login (`/api/auth/user-login`)
 - [ ] Manual steps above → verify Modules 1–3 on a real DB
 - [ ] Merge PR #6 → deploy to Vercel (10.1)
 - [ ] 9.1 CI pipeline (tsc, lint, tests/check.ts, build)

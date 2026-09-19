@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { existsSync } from 'node:fs';
 import { signJwt, verifyJwt, hashPassword, verifyPassword } from '../src/lib/auth';
 import { rateLimit } from '../src/lib/rate-limit';
 import { validateUpload, DL_EXT, PHOTO_EXT, vehicleSchema, vehicleUpdateSchema } from '../src/lib/validations';
@@ -53,6 +54,10 @@ async function runTests() {
   assert.ok(!verifyPassword('hunter2', 'garbage'), 'Malformed hash should fail, not throw');
   assert.notStrictEqual(hashPassword('hunter2'), stored, 'Salt must differ per hash');
   console.log('✅ Password Hash & Verify: OK');
+
+  // Passwordless demo login was an account-takeover hole — see docs/decisions.md #017
+  assert.ok(!existsSync('src/app/api/auth/user-login/route.ts'), 'Passwordless /api/auth/user-login must stay deleted');
+  console.log('✅ No passwordless login route: OK');
 
   // Rate limiter — see docs/decisions.md #005
   const t0 = 1_000_000;

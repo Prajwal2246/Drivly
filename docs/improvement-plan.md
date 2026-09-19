@@ -130,7 +130,7 @@ Added 2026-09-17: what turns a working project into one that gets shortlisted �
 Added 2026-09-19. Direction approved on the style-guide canvas (private link: https://claude.ai/artifact/Nc6hW4xTFRtL8U5dF6Gf6c): warm community, indigo lead, Fraunces + DM Sans, light + dark.
 | # | Change | Size | Why | Status | Log |
 |---|---|---|---|---|---|
-| 11.1 | Foundation: tokens + fonts, `Button`/`Input`/`Select`/`Badge`/`Toaster`/`AppHeader`, fix 86 invalid shades, `alert()` → toasts | M | No shared design layer; broken colours; 6 different headers | 🔍 PR to `develop` | #022 |
+| 11.1 | Foundation: tokens + fonts, `Button`/`Input`/`Select`/`Badge`/`Toaster`/`AppHeader`, fix 79 invalid shades, `alert()` → toasts | M | No shared design layer; broken colours; 6 different headers | 🔍 PR to `develop` | #022 |
 | 11.2 | Landing + login | M | First impression | ⬜ | |
 | 11.3 | Feed + vehicle page | M | What renters and recruiters see first | ⬜ | |
 | 11.4 | Dashboard — together with 4.5 (split the ~1,000-line component) and a real delete dialog | L | Largest, messiest screen; restyle once | ⬜ | |

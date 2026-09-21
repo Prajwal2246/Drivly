@@ -1,18 +1,101 @@
 @import "tailwindcss";
 
+/*
+ * Drivly design tokens — "warm community", indigo lead, light + dark. See docs/decisions.md #022.
+ * Use the semantic classes (bg-paper, bg-surface, text-ink, text-ink-muted, border-line, bg-primary, …),
+ * never raw zinc/stone shades, so every screen follows the theme.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #09090b;
-  --muted: #52525b;
-  --border: #e4e4e7;
-  --accent: #0f172a;
+  --paper: #FAF7F2;
+  --surface: #FFFFFF;
+  --sand: #F3EEE6;
+  --line: #E9E1D5;
+  --line-strong: #D6CBBB;
+  --ink: #221D17;
+  --ink-muted: #6B6154;
+  --primary: #4338CA;
+  --primary-hover: #3730A3;
+  --on-primary: #FFFFFF;
+  --primary-soft: #EDECFC;
+  --primary-ink: #3730A3;
+  --success-soft: #E4F2E9;
+  --success-ink: #256B47;
+  --warning-soft: #FBEFD8;
+  --warning-ink: #8A4F06;
+  --danger: #B42318;
+  --on-danger: #FFFFFF;
+  --danger-soft: #FCE9E6;
+  --danger-ink: #9A1D14;
+  --shadow: rgba(60, 40, 20, 0.10);
+
+  /* legacy names still read by un-migrated pages */
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+/*
+ * ponytail: dark mode is opt-in per screen while pages are migrated — a redesigned page adds `ui-v2`
+ * to its root so old hard-coded light pages don't turn half-dark. When the last page is migrated,
+ * move these variables to `:root` and drop the class.
+ */
+@media (prefers-color-scheme: dark) {
+  .ui-v2 {
+    --paper: #16130F;
+    --surface: #201C17;
+    --sand: #2B261F;
+    --line: #35302A;
+    --line-strong: #4A4238;
+    --ink: #F3EEE6;
+    --ink-muted: #B2A898;
+    --primary: #A5B4FC;
+    --primary-hover: #C7D0FE;
+    --on-primary: #16130F;
+    --primary-soft: #27264A;
+    --primary-ink: #C7D0FE;
+    --success-soft: #1D3327;
+    --success-ink: #8FD4AE;
+    --warning-soft: #3A2B14;
+    --warning-ink: #F2BE6E;
+    --danger: #F09A8F;
+    --on-danger: #16130F;
+    --danger-soft: #3E1F1B;
+    --danger-ink: #F6B3AA;
+    --shadow: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sand: var(--sand);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-ink: var(--primary-ink);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger: var(--danger);
+  --color-on-danger: var(--on-danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --radius-control: 12px;
+  --radius-card: 18px;
+  --shadow-raised: 0 12px 32px var(--shadow);
+
+  --font-sans: var(--font-dm-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* Smooth scroll behavior & scroll padding offset */

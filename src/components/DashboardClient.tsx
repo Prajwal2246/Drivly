@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
-import { 
-  Car, Calendar, Clock, DollarSign, LogOut, ArrowLeft, Plus, 
-  ShieldCheck, AlertCircle, CheckCircle2, ChevronRight, X, Play, StopCircle, Loader2, User
-} from 'lucide-react';
+import { Plus, ShieldCheck, X, Play, StopCircle, Loader2 } from 'lucide-react';
+import AppHeader from '@/components/ui/AppHeader';
+import { toast } from '@/components/ui/Toaster';
 
 interface Vehicle {
   id: string;
@@ -103,11 +102,6 @@ export default function DashboardClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.refresh();
-    router.push('/login');
-  };
 
   // Owner listing controls (#014, #015)
   const vehicleRequest = (id: string, init: RequestInit, path = '') => api(`/api/vehicles/${id}${path}`, init);
@@ -117,7 +111,7 @@ export default function DashboardClient({
       await vehicleRequest(vehicle.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ listed: !vehicle.listed }) });
       setMyVehicles(prev => prev.map(v => v.id === vehicle.id ? { ...v, listed: !vehicle.listed } : v));
     } catch (err: any) {
-      alert(err.message);
+      toast(err.message, 'error');
     }
   };
 
@@ -127,7 +121,7 @@ export default function DashboardClient({
       await vehicleRequest(vehicle.id, { method: 'DELETE' });
       setMyVehicles(prev => prev.filter(v => v.id !== vehicle.id));
     } catch (err: any) {
-      alert(err.message); // 409 when it has bookings: unlist instead
+      toast(err.message, 'error'); // 409 when it has bookings: unlist instead
     }
   };
 
@@ -137,9 +131,9 @@ export default function DashboardClient({
     body.append('file', file);
     try {
       await vehicleRequest(vehicle.id, { method: 'POST', body }, '/photo');
-      alert('Photo updated.');
+      toast('Photo updated.');
     } catch (err: any) {
-      alert(err.message);
+      toast(err.message, 'error');
     }
   };
 
@@ -157,7 +151,7 @@ export default function DashboardClient({
         prev.map(b => b.id === bookingId ? { ...b, status } : b)
       );
     } catch (err: any) {
-      alert(err.message || 'Failed to update request.');
+      toast(err.message || 'Failed to update request.', 'error');
     }
   };
 
@@ -165,7 +159,7 @@ export default function DashboardClient({
   const handleStartTrip = async () => {
     if (!activeInspectionBooking) return;
     if (!inspectionOdometer.trim()) {
-      alert('Please enter current odometer reading.');
+      toast('Please enter current odometer reading.', 'error');
       return;
     }
     
@@ -194,9 +188,9 @@ export default function DashboardClient({
         lightsVerified: false,
         brakesChecked: false,
       });
-      alert('Trip activated! Drive safe.');
+      toast('Trip activated! Drive safe.');
     } catch (err: any) {
-      alert(err.message || 'Failed to start trip.');
+      toast(err.message || 'Failed to start trip.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -206,13 +200,13 @@ export default function DashboardClient({
   const handleCompleteTrip = async () => {
     if (!activeEndTripBooking) return;
     if (!endOdometer.trim()) {
-      alert('Please enter return odometer reading.');
+      toast('Please enter return odometer reading.', 'error');
       return;
     }
 
     const startOdom = activeEndTripBooking.odometerStart || 0;
     if (parseInt(endOdometer) < startOdom) {
-      alert(`Return odometer cannot be less than starting odometer (${startOdom}).`);
+      toast(`Return odometer cannot be less than starting odometer (${startOdom}).`, 'error');
       return;
     }
 
@@ -233,9 +227,9 @@ export default function DashboardClient({
       );
       setActiveEndTripBooking(null);
       setEndOdometer('');
-      alert('Trip completed! Thank you for sharing.');
+      toast('Trip completed! Thank you for sharing.');
     } catch (err: any) {
-      alert(err.message || 'Failed to complete trip.');
+      toast(err.message || 'Failed to complete trip.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -267,9 +261,9 @@ export default function DashboardClient({
       setRenterBookings(updateList);
       setOwnerBookings(updateList);
       setActiveReviewBooking(null);
-      alert('Thank you for your rating!');
+      toast('Thank you for your rating!');
     } catch (err: any) {
-      alert(err.message || 'Failed to post review.');
+      toast(err.message || 'Failed to post review.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -278,7 +272,7 @@ export default function DashboardClient({
   const handleLogChallan = async () => {
     if (!activeChallanBooking) return;
     if (!challanPenaltyInput.trim()) {
-      alert('Please enter a challan penalty amount.');
+      toast('Please enter a challan penalty amount.', 'error');
       return;
     }
 
@@ -308,9 +302,9 @@ export default function DashboardClient({
       setRenterBookings(updateList);
       setOwnerBookings(updateList);
       setActiveChallanBooking(null);
-      alert('Traffic challan violation logged successfully!');
+      toast('Traffic challan violation logged successfully!');
     } catch (err: any) {
-      alert(err.message || 'Failed to log challan.');
+      toast(err.message || 'Failed to log challan.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -333,31 +327,7 @@ export default function DashboardClient({
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col pb-12">
       {/* Header */}
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/feed')}>
-          <ArrowLeft className="w-5 h-5 text-zinc-650" />
-          <span className="font-bold text-sm text-zinc-700">Back to Society Feed</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-zinc-550 font-bold bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-xl uppercase">
-            {user.role} • {user.society}
-          </span>
-          <button 
-            onClick={() => router.push('/profile')}
-            className="flex items-center gap-1.5 px-4 py-2 hover:bg-zinc-100 rounded-xl text-xs font-bold text-zinc-700 transition cursor-pointer border border-zinc-200 bg-white"
-          >
-            <User className="w-3.5 h-3.5" />
-            My Profile
-          </button>
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Logout
-          </button>
-        </div>
-      </header>
+      <AppHeader name={user.name} society={user.society} />
 
       {/* Main Body */}
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex-1">
@@ -445,7 +415,7 @@ export default function DashboardClient({
                                 b.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
                                 b.status === 'APPROVED' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
                                 b.status === 'ACTIVE' ? 'bg-emerald-500 text-white' :
-                                b.status === 'COMPLETED' ? 'bg-zinc-100 text-zinc-550 border border-zinc-200' :
+                                b.status === 'COMPLETED' ? 'bg-zinc-100 text-zinc-600 border border-zinc-200' :
                                 'bg-zinc-50 text-zinc-400 border border-zinc-100'
                               }`}>
                                 {b.status}
@@ -492,7 +462,7 @@ export default function DashboardClient({
                                 </button>
                               )}
                               {b.status === 'COMPLETED' && b.odometerStart !== null && b.odometerEnd !== null && (
-                                <span className="text-[10px] text-zinc-450 block leading-tight">
+                                <span className="text-[10px] text-zinc-500 block leading-tight">
                                   Odo: {b.odometerStart} ➔ {b.odometerEnd} ({b.odometerEnd - b.odometerStart} km)
                                 </span>
                               )}
@@ -531,7 +501,7 @@ export default function DashboardClient({
               {/* List Action */}
               <div className="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm text-center space-y-4">
                 <h3 className="text-lg font-black text-zinc-950 tracking-tight">List a Vehicle</h3>
-                <p className="text-xs text-zinc-450 leading-relaxed">
+                <p className="text-xs text-zinc-500 leading-relaxed">
                   Ready to share a car or bike with verified neighbors in your society?
                 </p>
                 <button
@@ -548,11 +518,11 @@ export default function DashboardClient({
                 {/* Stats Panel */}
                 <div className="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[10px] text-zinc-450 font-bold uppercase tracking-wider block">Total Listings</span>
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Total Listings</span>
                     <span className="text-3xl font-black text-zinc-950 tracking-tight mt-1 block">{myVehicles.length}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-zinc-450 font-bold uppercase tracking-wider block">Total Earnings</span>
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Total Earnings</span>
                     <span className="text-3xl font-black text-emerald-600 tracking-tight mt-1 block">₹{totalEarnings}</span>
                   </div>
                 </div>
@@ -611,13 +581,13 @@ export default function DashboardClient({
               ) : (
                 <div className="space-y-4">
                   {ownerBookings.map(b => (
-                    <div key={b.id} className="border border-zinc-150 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-50/50">
+                    <div key={b.id} className="border border-zinc-200 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-50/50">
                       <div>
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className="text-sm font-bold text-zinc-900">{b.renter.name}</span>
                           <span className="text-[10px] text-zinc-400 font-mono">{b.renter.phone}</span>
                         </div>
-                        <p className="text-xs text-zinc-550">
+                        <p className="text-xs text-zinc-600">
                           Wants to borrow: <strong>{b.vehicle.brand} {b.vehicle.model}</strong>
                         </p>
                         <p className="text-[10.5px] text-zinc-400 mt-1">
@@ -638,7 +608,7 @@ export default function DashboardClient({
 
                       <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-100">
                         <div>
-                          <span className="text-[10px] text-zinc-450 font-bold block uppercase tracking-wide">Total Price</span>
+                          <span className="text-[10px] text-zinc-500 font-bold block uppercase tracking-wide">Total Price</span>
                           <span className="text-base font-black text-zinc-900 block">₹{b.totalCost}</span>
                           
                           {/* Owner View Payment details */}
@@ -674,8 +644,8 @@ export default function DashboardClient({
                             ) : (
                               <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
                                 b.status === 'APPROVED' || b.status === 'ACTIVE' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                                b.status === 'COMPLETED' ? 'bg-zinc-100 text-zinc-550 border border-zinc-200' :
-                                'bg-zinc-50 text-zinc-400 border border-zinc-150'
+                                b.status === 'COMPLETED' ? 'bg-zinc-100 text-zinc-600 border border-zinc-200' :
+                                'bg-zinc-50 text-zinc-400 border border-zinc-200'
                               }`}>
                                 {b.status}
                               </span>
@@ -736,7 +706,7 @@ export default function DashboardClient({
           <div className="bg-white border border-zinc-200 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden text-left relative animate-scale-in">
             <button 
               onClick={() => setActiveInspectionBooking(null)}
-              className="absolute top-4 right-4 text-zinc-450 hover:text-zinc-650 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-700 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -852,7 +822,7 @@ export default function DashboardClient({
           <div className="bg-white border border-zinc-200 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden text-left relative animate-scale-in">
             <button 
               onClick={() => setActiveEndTripBooking(null)}
-              className="absolute top-4 right-4 text-zinc-450 hover:text-zinc-650 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-700 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -909,7 +879,7 @@ export default function DashboardClient({
           <div className="bg-white border border-zinc-200 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden text-left relative animate-scale-in">
             <button 
               onClick={() => setActiveReviewBooking(null)}
-              className="absolute top-4 right-4 text-zinc-450 hover:text-zinc-650 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-700 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -987,7 +957,7 @@ export default function DashboardClient({
           <div className="bg-white border border-zinc-200 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden text-left relative animate-scale-in">
             <button 
               onClick={() => setActiveChallanBooking(null)}
-              className="absolute top-4 right-4 text-zinc-450 hover:text-zinc-650 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-700 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>

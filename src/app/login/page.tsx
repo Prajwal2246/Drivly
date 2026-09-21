@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, Phone, User, Building, MapPin, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { toast } from '@/components/ui/Toaster';
 
 function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -60,7 +61,7 @@ function LoginForm() {
         // Automatically switch to login tab with phone filled
         setIsLogin(true);
         setError(null);
-        alert('Account created successfully! Please sign in.');
+        toast('Account created successfully! Please sign in.');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
@@ -101,10 +102,10 @@ function LoginForm() {
               <path d="M6.5 18V6H12c3.3 0 6 2.7 6 6s-2.7 6-6 6H6.5z" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span className="text-xl font-bold text-zinc-955 tracking-tight">Driv<span className="text-zinc-700 font-medium">ly</span></span>
+          <span className="text-xl font-bold text-zinc-950 tracking-tight">Driv<span className="text-zinc-700 font-medium">ly</span></span>
         </div>
-        <h2 className="text-3xl font-extrabold text-zinc-955 tracking-tight">{isLogin ? 'Welcome Back' : 'Create Gated Profile'}</h2>
-        <p className="mt-2 text-sm text-zinc-650 font-medium">
+        <h2 className="text-3xl font-extrabold text-zinc-950 tracking-tight">{isLogin ? 'Welcome Back' : 'Create Gated Profile'}</h2>
+        <p className="mt-2 text-sm text-zinc-700 font-medium">
           {isLogin ? 'Access your community vehicle sharing feed' : 'Register securely within your society'}
         </p>
       </div>

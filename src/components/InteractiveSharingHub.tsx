@@ -100,7 +100,7 @@ export default function InteractiveSharingHub() {
             className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer ${
               activeMode === "owner"
                 ? "bg-white text-emerald-700 shadow-md border border-emerald-100/50 scale-[1.01]"
-                : "text-zinc-550 hover:text-zinc-900"
+                : "text-zinc-600 hover:text-zinc-900"
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full bg-emerald-500 ${activeMode === "owner" && "animate-pulse"}`} />
@@ -111,7 +111,7 @@ export default function InteractiveSharingHub() {
             className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer ${
               activeMode === "renter"
                 ? "bg-white text-blue-700 shadow-md border border-blue-100/50 scale-[1.01]"
-                : "text-zinc-550 hover:text-zinc-900"
+                : "text-zinc-600 hover:text-zinc-900"
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full bg-blue-500 ${activeMode === "renter" && "animate-pulse"}`} />
@@ -309,7 +309,7 @@ export default function InteractiveSharingHub() {
                   <circle cx={activeCar.renterNode.x} cy={activeCar.renterNode.y} r="4" fill={activeMode === "owner" ? "#10b981" : "#3b82f6"} className="transition-all duration-700" />
                   <circle cx={activeCar.renterNode.x} cy={activeCar.renterNode.y} r="8" fill="none" stroke={activeMode === "owner" ? "#34d399" : "#60a5fa"} strokeWidth="1" className="animate-pulse" />
                 </svg>
-                <div className="absolute bottom-2 left-3 flex items-center gap-1.5 text-[8px] font-bold text-zinc-400 uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-zinc-150 select-none">
+                <div className="absolute bottom-2 left-3 flex items-center gap-1.5 text-[8px] font-bold text-zinc-400 uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-zinc-200 select-none">
                   <MapPin className="w-2.5 h-2.5" />
                   Green Park Map Preview
                 </div>

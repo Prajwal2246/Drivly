@@ -54,9 +54,9 @@ export default function FeedLoading() {
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-150 pt-4 flex items-center justify-between">
+                <div className="border-t border-zinc-200 pt-4 flex items-center justify-between">
                   <div className="space-y-1.5">
-                    <div className="w-10 h-3 bg-zinc-250 rounded animate-pulse" />
+                    <div className="w-10 h-3 bg-zinc-200 rounded animate-pulse" />
                     <div className="w-16 h-5.5 bg-zinc-200 rounded-lg animate-pulse" />
                   </div>
                   <div className="w-24 h-9 bg-zinc-200 rounded-xl animate-pulse" />

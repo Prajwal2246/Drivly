@@ -105,7 +105,7 @@ export default function VehicleCard({
       <div className="p-5 z-10 flex justify-between items-start bg-gradient-to-b from-white/95 via-white/40 to-transparent w-full pb-8">
         <div className="space-y-1">
           <h3 className="text-base sm:text-lg font-black text-zinc-900 tracking-tight leading-tight group-hover:text-zinc-950 transition-colors">
-            {brand} <span className="font-semibold text-zinc-650">{model}</span>
+            {brand} <span className="font-semibold text-zinc-700">{model}</span>
           </h3>
           
           <div className="flex items-center gap-1.5 flex-wrap">

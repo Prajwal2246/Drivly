@@ -47,6 +47,14 @@ When a task is finished: tick it here, set its status in the plan, add a decisio
 - [ ] 10.1 Deploy with seeded demo data; live URL + demo buttons at top of README
 - [ ] **Gate:** a stranger on the live URL can demo-login, browse, list a vehicle with a photo, request a booking, and sees readable errors
 
+## 🎨 UI redesign (in progress — see plan module 11)
+- [x] 11.1 Foundation: tokens, fonts, shared components, one header, toasts, invalid shades fixed (#022)
+- [ ] 11.2 Landing + login
+- [ ] 11.3 Feed + vehicle page
+- [ ] 11.4 Dashboard (with 4.5 split)
+- [ ] 11.5 Profile + admin
+- [ ] 11.6 Dark mode everywhere
+
 ## ⏭️ Phase 2 — Make it credible (~2–3 days) → resume-ready
 - [ ] 4.1 Booking state machine `canTransition(from, to, actor)` + participant check (closes skip-approval and stranger-cancel holes)
 - [ ] 4.2 Cancellation + refund rule

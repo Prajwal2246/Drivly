@@ -45,17 +45,17 @@ export default function Footer() {
             <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-900">Platform</h4>
             <ul className="space-y-2 text-xs sm:text-sm font-semibold">
               <li>
-                <button onClick={() => scrollTo('how-it-works')} className="text-zinc-650 hover:text-zinc-950 transition-colors cursor-pointer">
+                <button onClick={() => scrollTo('how-it-works')} className="text-zinc-700 hover:text-zinc-950 transition-colors cursor-pointer">
                   How It Works
                 </button>
               </li>
               <li>
-                <button onClick={() => scrollTo('benefits')} className="text-zinc-650 hover:text-zinc-950 transition-colors cursor-pointer">
+                <button onClick={() => scrollTo('benefits')} className="text-zinc-700 hover:text-zinc-950 transition-colors cursor-pointer">
                   Benefits
                 </button>
               </li>
               <li>
-                <button onClick={() => scrollTo('faq')} className="text-zinc-650 hover:text-zinc-950 transition-colors cursor-pointer">
+                <button onClick={() => scrollTo('faq')} className="text-zinc-700 hover:text-zinc-950 transition-colors cursor-pointer">
                   FAQ
                 </button>
               </li>
@@ -67,17 +67,17 @@ export default function Footer() {
             <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-900">Trust & Legal</h4>
             <ul className="space-y-2 text-xs sm:text-sm font-semibold">
               <li>
-                <a href="#verification" onClick={(e) => { e.preventDefault(); scrollTo('verification'); }} className="text-zinc-650 hover:text-zinc-950 transition-colors">
+                <a href="#verification" onClick={(e) => { e.preventDefault(); scrollTo('verification'); }} className="text-zinc-700 hover:text-zinc-950 transition-colors">
                   Gated Trust Code
                 </a>
               </li>
               <li>
-                <a href="#privacy" onClick={(e) => e.preventDefault()} className="text-zinc-650 hover:text-zinc-950 transition-colors">
+                <a href="#privacy" onClick={(e) => e.preventDefault()} className="text-zinc-700 hover:text-zinc-950 transition-colors">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#terms" onClick={(e) => e.preventDefault()} className="text-zinc-650 hover:text-zinc-950 transition-colors">
+                <a href="#terms" onClick={(e) => e.preventDefault()} className="text-zinc-700 hover:text-zinc-950 transition-colors">
                   Terms of Service
                 </a>
               </li>

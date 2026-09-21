@@ -129,8 +129,8 @@ export default function AdminDashboardClient({ initialData, users }: AdminDashbo
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 pb-6">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-955 font-sans">Waitlist Registrations</h1>
-            <p className="text-zinc-650 text-sm mt-1 font-medium">Manage and export interest submissions.</p>
+            <h1 className="text-3xl font-bold text-zinc-950 font-sans">Waitlist Registrations</h1>
+            <p className="text-zinc-700 text-sm mt-1 font-medium">Manage and export interest submissions.</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -217,7 +217,7 @@ export default function AdminDashboardClient({ initialData, users }: AdminDashbo
         <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px] border-collapse text-left text-sm text-zinc-600">
-              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-650 font-bold text-xs uppercase tracking-wider">
+              <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-bold text-xs uppercase tracking-wider">
                 <tr>
                   <th className="py-4 px-6">Name</th>
                   <th className="py-4 px-6">Phone</th>
@@ -243,7 +243,7 @@ export default function AdminDashboardClient({ initialData, users }: AdminDashbo
                           </td>
                           <td className="py-4 px-6 font-mono text-zinc-700">{entry.phone}</td>
                           <td className="py-4 px-6 text-zinc-800">{entry.city}</td>
-                          <td className="py-4 px-6 max-w-[200px] truncate text-zinc-850">{entry.societyName}</td>
+                          <td className="py-4 px-6 max-w-[200px] truncate text-zinc-800">{entry.societyName}</td>
                           <td className="py-4 px-6 text-center">
                             <span className={`inline-block px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider ${
                               entry.role === 'RENTER' 
@@ -287,7 +287,7 @@ export default function AdminDashboardClient({ initialData, users }: AdminDashbo
                                   <h4 className="font-bold text-zinc-600 uppercase tracking-wider text-[10px] border-b border-zinc-200 pb-2">
                                     Registration Details
                                   </h4>
-                                  <div className="grid grid-cols-[120px_1fr] gap-y-2.5 gap-x-2 text-zinc-850">
+                                  <div className="grid grid-cols-[120px_1fr] gap-y-2.5 gap-x-2 text-zinc-800">
                                     <div className="text-zinc-600 font-semibold text-xs uppercase tracking-wider">Waitlist ID:</div>
                                     <div className="font-mono text-xs text-zinc-800">{entry.id}</div>
  
@@ -317,7 +317,7 @@ export default function AdminDashboardClient({ initialData, users }: AdminDashbo
                                     Vehicle Information
                                   </h4>
                                   {hasVehicle ? (
-                                    <div className="grid grid-cols-[140px_1fr] gap-y-2.5 gap-x-2 text-zinc-850">
+                                    <div className="grid grid-cols-[140px_1fr] gap-y-2.5 gap-x-2 text-zinc-800">
                                       <div className="text-zinc-600 font-semibold text-xs uppercase tracking-wider">Vehicle Type:</div>
                                       <div className="flex items-center gap-1.5 text-zinc-800">
                                         <Car className="w-3.5 h-3.5 text-zinc-600" />
@@ -340,7 +340,7 @@ export default function AdminDashboardClient({ initialData, users }: AdminDashbo
                                       </div>
                                     </div>
                                   ) : (
-                                    <p className="text-zinc-550 text-xs italic font-medium">
+                                    <p className="text-zinc-600 text-xs italic font-medium">
                                       User registered as a Renter only. No vehicle details listed.
                                     </p>
                                   )}

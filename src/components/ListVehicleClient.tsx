@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, ArrowLeft, Loader2, AlertCircle, Plus, Car } from 'lucide-react';
+import { ShieldAlert, Loader2, AlertCircle, Plus } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import AppHeader from '@/components/ui/AppHeader';
+import { toast } from '@/components/ui/Toaster';
 
 interface ListVehicleClientProps {
   user: {
@@ -52,7 +54,7 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
         try {
           await api(`/api/vehicles/${data.vehicle.id}/photo`, { method: 'POST', body });
         } catch (err) {
-          alert(`Your vehicle is listed, but the photo didn't upload: ${(err as Error).message} You can add it from the dashboard.`);
+          toast(`Your vehicle is listed, but the photo didn't upload: ${(err as Error).message} You can add it from the dashboard.`, 'error');
         }
       }
 
@@ -69,12 +71,7 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
   if (isRenterOnly) {
     return (
       <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col pb-12">
-        <header className="bg-white border-b border-zinc-200 sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/dashboard')}>
-            <ArrowLeft className="w-5 h-5 text-zinc-650" />
-            <span className="font-bold text-sm text-zinc-700">Back to Dashboard</span>
-          </div>
-        </header>
+        <AppHeader name={user.name} society={user.society} />
 
         <main className="max-w-md w-full mx-auto px-4 mt-16 flex-grow flex items-center justify-center">
           <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm text-center space-y-5">
@@ -96,7 +93,7 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
               </button>
               <button
                 onClick={() => router.push('/dashboard')}
-                className="w-full py-3 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 text-zinc-750 font-bold rounded-xl text-xs transition cursor-pointer"
+                className="w-full py-3 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-bold rounded-xl text-xs transition cursor-pointer"
               >
                 Back to Dashboard
               </button>
@@ -110,12 +107,7 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
   // Active Listing Form View
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col pb-12">
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/dashboard')}>
-          <ArrowLeft className="w-5 h-5 text-zinc-650" />
-          <span className="font-bold text-sm text-zinc-700">Back to Dashboard</span>
-        </div>
-      </header>
+      <AppHeader name={user.name} society={user.society} />
 
       <main className="max-w-xl w-full mx-auto px-4 mt-8 flex-grow">
         <div className="bg-white border border-zinc-200 rounded-3xl p-6 sm:p-10 shadow-sm text-left space-y-6">
@@ -217,7 +209,7 @@ export default function ListVehicleClient({ user }: ListVehicleClientProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full mt-6 py-4 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:bg-zinc-100 disabled:text-zinc-450"
+              className="w-full mt-6 py-4 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:bg-zinc-100 disabled:text-zinc-500"
             >
               {isSubmitting ? (
                 <>
